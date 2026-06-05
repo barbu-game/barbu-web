@@ -60,6 +60,12 @@ export function useGameSocket() {
     [ensureSocket, send],
   );
 
+  const quickMatch = useCallback(
+    (name: string, size: number) =>
+      ensureSocket(() => send({ type: "enqueueMatchmaking", name, size })),
+    [ensureSocket, send],
+  );
+
   const addBot = useCallback(() => send({ type: "addBot" }), [send]);
   const start = useCallback(() => send({ type: "start" }), [send]);
   const chooseContract = useCallback(
@@ -68,5 +74,5 @@ export function useGameSocket() {
   );
   const play = useCallback((move: MoveT) => send({ type: "play", move }), [send]);
 
-  return { state, seat, roomId, error, status, createRoom, join, addBot, start, chooseContract, play };
+  return { state, seat, roomId, error, status, createRoom, join, quickMatch, addBot, start, chooseContract, play };
 }

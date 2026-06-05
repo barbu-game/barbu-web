@@ -10,7 +10,13 @@ export default function Page() {
   let content;
   if (!game.state) {
     content = (
-      <Home onCreate={game.createRoom} onJoin={game.join} error={game.error} status={game.status} />
+      <Home
+        onCreate={game.createRoom}
+        onJoin={game.join}
+        onQuickMatch={game.quickMatch}
+        error={game.error}
+        status={game.status}
+      />
     );
   } else if (game.state.phase === "LOBBY") {
     content = <RoomLobby state={game.state} onAddBot={game.addBot} onStart={game.start} />;

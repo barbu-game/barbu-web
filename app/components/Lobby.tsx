@@ -6,11 +6,13 @@ import type { GameState } from "../lib/game";
 export function Home({
   onCreate,
   onJoin,
+  onQuickMatch,
   error,
   status,
 }: {
   onCreate: (name: string, playerCount: number) => void;
   onJoin: (name: string, code: string) => void;
+  onQuickMatch: (name: string, size: number) => void;
   error: string | null;
   status: string;
 }) {
@@ -55,6 +57,12 @@ export function Home({
           className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-white transition hover:bg-emerald-400"
         >
           Create table
+        </button>
+        <button
+          onClick={() => onQuickMatch(displayName, playerCount)}
+          className="mt-2 w-full rounded-lg border border-emerald-400/40 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-400/10"
+        >
+          Quick match
         </button>
       </div>
 
