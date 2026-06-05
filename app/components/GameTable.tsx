@@ -122,7 +122,10 @@ function TrickArea({ state }: { state: GameState }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-4">
       {plays.map((play) => (
-        <div key={play.seat} className="flex flex-col items-center gap-1">
+        <div
+          key={`${play.seat}-${play.card.suit}-${play.card.rank}`}
+          className="animate-card-in flex flex-col items-center gap-1"
+        >
           <PlayingCard card={play.card} size="lg" />
           <span className="text-xs text-slate-400">{state.players[play.seat]?.name}</span>
         </div>
@@ -251,7 +254,12 @@ function GameOver({ state }: { state: GameState }) {
           </li>
         ))}
       </ol>
-      <p className="mt-6 text-center text-xs text-slate-500">Refresh to play again.</p>
+      <button
+        onClick={() => window.location.reload()}
+        className="mt-6 w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-white transition hover:bg-emerald-400"
+      >
+        New game
+      </button>
     </div>
   );
 }
