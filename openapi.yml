@@ -1,0 +1,73 @@
+openapi: 3.0.1
+info:
+  title: Barbu API
+  version: "1"
+paths:
+  /auth/login:
+    post:
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthController.Credentials"
+        required: true
+      responses:
+        "200":
+          description: login 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /auth/register:
+    post:
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthController.Credentials"
+        required: true
+      responses:
+        "200":
+          description: register 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /health:
+    get:
+      operationId: health
+      responses:
+        "200":
+          description: health 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /me:
+    get:
+      operationId: me
+      responses:
+        "200":
+          description: me 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+components:
+  schemas:
+    AuthController.Credentials:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          minLength: 1
+          type: string
+        password:
+          minLength: 1
+          type: string

@@ -18,5 +18,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Regenerate the API client from the committed contract; fail if it drifts.
+      - run: pnpm gen:api
+      - run: git diff --exit-code app/lib/api
       - run: pnpm lint
       - run: pnpm build
