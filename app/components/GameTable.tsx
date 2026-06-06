@@ -31,10 +31,12 @@ export default function GameTable({
   state,
   onChooseContract,
   onPlay,
+  onCastStopVote,
 }: {
   state: GameState;
   onChooseContract: (contract: string) => void;
   onPlay: (move: MoveT) => void;
+  onCastStopVote: (stop: boolean) => void;
 }) {
   const yourTurn = isYourTurn(state);
 
@@ -42,6 +44,8 @@ export default function GameTable({
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-4 p-4">
       <TopBar state={state} />
       <PlayersStrip state={state} />
+
+      {state.stopVote?.open && <VotePanel state={state} onCastStopVote={onCastStopVote} />}
 
       <div className="flex flex-1 items-center justify-center rounded-2xl bg-emerald-950/40 p-6 ring-1 ring-white/5">
         {state.phase === "GAME_OVER" ? (
@@ -60,6 +64,44 @@ export default function GameTable({
       {state.phase === "PLAYING" && (
         <YourHand state={state} yourTurn={yourTurn} onPlay={onPlay} />
       )}
+    </div>
+  );
+}
+
+function VotePanel({
+  state,
+  onCastStopVote,
+}: {
+  state: GameState;
+  onCastStopVote: (stop: boolean) => void;
+}) {
+  const vote = state.stopVote!;
+  const voted = vote.youVoted !== null && vote.youVoted !== undefined;
+  return (
+    <div className="rounded-xl bg-amber-500/15 p-4 text-center ring-1 ring-amber-400/40">
+      <p className="text-sm font-semibold text-amber-200">
+        End of a dealer&apos;s turn — vote to stop the game here?
+      </p>
+      <p className="mt-1 text-xs text-amber-200/70">
+        {vote.stopVotes} of {vote.humans} voted to stop
+      </p>
+      <div className="mt-3 flex justify-center gap-3">
+        <button
+          onClick={() => onCastStopVote(false)}
+          disabled={voted}
+          className="rounded-lg bg-emerald-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400 disabled:opacity-40"
+        >
+          Keep playing
+        </button>
+        <button
+          onClick={() => onCastStopVote(true)}
+          disabled={voted}
+          className="rounded-lg bg-rose-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-rose-400 disabled:opacity-40"
+        >
+          Stop here
+        </button>
+      </div>
+      {voted && <p className="mt-2 text-xs text-amber-200/60">Vote cast — waiting for others…</p>}
     </div>
   );
 }

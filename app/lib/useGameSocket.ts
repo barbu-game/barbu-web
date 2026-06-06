@@ -73,6 +73,7 @@ export function useGameSocket() {
     [send],
   );
   const play = useCallback((move: MoveT) => send({ type: "play", move }), [send]);
+  const castStopVote = useCallback((stop: boolean) => send({ type: "castStopVote", stop }), [send]);
 
-  return { state, seat, roomId, error, status, createRoom, join, quickMatch, addBot, start, chooseContract, play };
+  return { state, seat, roomId, error, status, createRoom, join, quickMatch, addBot, start, chooseContract, play, castStopVote };
 }

@@ -22,7 +22,12 @@ export default function Page() {
     content = <RoomLobby state={game.state} onAddBot={game.addBot} onStart={game.start} />;
   } else {
     content = (
-      <GameTable state={game.state} onChooseContract={game.chooseContract} onPlay={game.play} />
+      <GameTable
+        state={game.state}
+        onChooseContract={game.chooseContract}
+        onPlay={game.play}
+        onCastStopVote={game.castStopVote}
+      />
     );
   }
 

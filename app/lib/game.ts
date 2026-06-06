@@ -27,6 +27,7 @@ export type GameState = {
   yourLegalMoves?: MoveT[];
   availableContracts?: string[];
   standings?: Standing[];
+  stopVote?: { open: boolean; humans: number; stopVotes: number; youVoted: boolean | null };
 };
 
 export const SUIT_SYMBOL: Record<string, string> = {
