@@ -130,12 +130,18 @@ function PlayersStrip({ state }: { state: GameState }) {
       {state.players.map((p) => {
         const active = state.currentActor === p.seat;
         const isDealer = state.dealer === p.seat;
+        const isWinner = state.trick?.complete && state.trick.winner === p.seat;
+        const roundScore = state.roundScores?.[p.seat];
         return (
           <div
             key={p.seat}
             className={[
               "rounded-xl px-3 py-2 ring-1 transition",
-              active ? "bg-emerald-500/20 ring-emerald-400" : "bg-slate-900/60 ring-white/10",
+              isWinner
+                ? "bg-amber-500/20 ring-amber-400"
+                : active
+                  ? "bg-emerald-500/20 ring-emerald-400"
+                  : "bg-slate-900/60 ring-white/10",
             ].join(" ")}
           >
             <div className="flex items-center justify-between">
@@ -143,11 +149,24 @@ function PlayersStrip({ state }: { state: GameState }) {
                 {p.name}
                 {p.seat === state.yourSeat && <span className="ml-1 text-xs text-emerald-400">(you)</span>}
               </span>
-              {isDealer && <span className="text-[10px] uppercase text-amber-300">deal</span>}
+              {isWinner ? (
+                <span className="text-[10px] font-semibold uppercase text-amber-300">takes</span>
+              ) : (
+                isDealer && <span className="text-[10px] uppercase text-amber-300">deal</span>
+              )}
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
               <span>{state.handCounts ? `${state.handCounts[p.seat]} cards` : p.bot ? "bot" : "human"}</span>
-              <span className="font-mono text-slate-200">{state.totals?.[p.seat] ?? 0}</span>
+              <span className="flex items-center gap-1.5">
+                {roundScore !== undefined && roundScore !== 0 && (
+                  <span className="font-mono text-amber-300" title="this round">
+                    {roundScore}
+                  </span>
+                )}
+                <span className="font-mono text-slate-200" title="total">
+                  {state.totals?.[p.seat] ?? 0}
+                </span>
+              </span>
             </div>
           </div>
         );
@@ -157,21 +176,36 @@ function PlayersStrip({ state }: { state: GameState }) {
 }
 
 function TrickArea({ state }: { state: GameState }) {
-  const plays = state.trick?.plays ?? [];
+  const trick = state.trick;
+  const plays = trick?.plays ?? [];
   if (plays.length === 0) {
     return <p className="text-slate-500">Waiting for the first card…</p>;
   }
+  const winnerName =
+    trick?.complete && trick.winner !== undefined ? state.players[trick.winner]?.name : null;
   return (
-    <div className="flex flex-wrap items-center justify-center gap-4">
-      {plays.map((play) => (
-        <div
-          key={`${play.seat}-${play.card.suit}-${play.card.rank}`}
-          className="animate-card-in flex flex-col items-center gap-1"
-        >
-          <PlayingCard card={play.card} size="lg" />
-          <span className="text-xs text-slate-400">{state.players[play.seat]?.name}</span>
-        </div>
-      ))}
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        {plays.map((play) => {
+          const isWinner = trick?.complete && play.seat === trick.winner;
+          return (
+            <div
+              key={`${play.seat}-${play.card.suit}-${play.card.rank}`}
+              className="animate-card-in flex flex-col items-center gap-1"
+            >
+              <PlayingCard card={play.card} size="lg" highlight={isWinner} />
+              <span className={isWinner ? "text-xs font-semibold text-amber-300" : "text-xs text-slate-400"}>
+                {state.players[play.seat]?.name}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {winnerName && (
+        <p className="animate-card-in rounded-full bg-amber-500/20 px-4 py-1 text-sm font-semibold text-amber-200 ring-1 ring-amber-400/50">
+          ▸ {winnerName} takes the trick
+        </p>
+      )}
     </div>
   );
 }

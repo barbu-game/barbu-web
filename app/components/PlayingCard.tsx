@@ -7,6 +7,7 @@ type Props = {
   size?: "sm" | "md" | "lg";
   playable?: boolean;
   dimmed?: boolean;
+  highlight?: boolean;
   onClick?: () => void;
 };
 
@@ -16,7 +17,7 @@ const SIZES = {
   lg: "h-28 w-20 text-2xl",
 };
 
-export default function PlayingCard({ card, size = "md", playable, dimmed, onClick }: Props) {
+export default function PlayingCard({ card, size = "md", playable, dimmed, highlight, onClick }: Props) {
   const red = isRedSuit(card.suit);
   return (
     <button
@@ -27,9 +28,11 @@ export default function PlayingCard({ card, size = "md", playable, dimmed, onCli
         "relative flex select-none flex-col items-center justify-between rounded-lg border bg-white p-1 font-semibold shadow-md transition-all",
         SIZES[size],
         red ? "text-rose-600" : "text-slate-900",
-        playable
-          ? "cursor-pointer border-emerald-400 ring-2 ring-emerald-400/60 hover:-translate-y-2"
-          : "border-slate-300",
+        highlight
+          ? "-translate-y-1 border-amber-400 ring-4 ring-amber-400 shadow-amber-400/40"
+          : playable
+            ? "cursor-pointer border-emerald-400 ring-2 ring-emerald-400/60 hover:-translate-y-2"
+            : "border-slate-300",
         dimmed ? "opacity-50" : "",
       ].join(" ")}
     >

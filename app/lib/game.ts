@@ -22,7 +22,13 @@ export type GameState = {
   contract?: string;
   handCounts?: number[];
   yourHand?: CardT[];
-  trick?: { leader: number; plays: { seat: number; card: CardT }[] };
+  roundScores?: number[];
+  trick?: {
+    leader: number;
+    plays: { seat: number; card: CardT }[];
+    complete?: boolean;
+    winner?: number;
+  };
   board?: Record<string, { opened: boolean; low: number; high: number }>;
   yourLegalMoves?: MoveT[];
   availableContracts?: string[];
