@@ -1,5 +1,19 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## API contract
+
+The typed API client and DTOs come from `@barbu-game/barbu-api`, published to GitHub
+Packages by `barbu-server`'s release pipeline (getout pattern — drift breaks the
+typecheck). Installing it needs a GitHub token with `read:packages`:
+
+```bash
+export NODE_AUTH_TOKEN=<github PAT with read:packages>
+pnpm install
+```
+
+The scope is mapped to the registry in `.npmrc`; CI passes the token as
+`NODE_AUTH_TOKEN`.
+
 ## Getting Started
 
 First, run the development server:

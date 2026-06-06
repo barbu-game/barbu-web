@@ -18,8 +18,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Regenerate the API client from the committed contract; fail if it drifts.
-      - run: pnpm gen:api
-      - run: git diff --exit-code app/lib/api
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The contract lives in the pinned @barbu-game/barbu-api; next build typechecks
+      # against it, so any drift from the server's published types fails the build.
       - run: pnpm lint
       - run: pnpm build

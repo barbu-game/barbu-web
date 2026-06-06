@@ -1,4 +1,4 @@
-import type { AuthControllerCredentials } from "./api/barbu";
+import type { AuthControllerCredentials } from "@barbu-game/barbu-api";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
