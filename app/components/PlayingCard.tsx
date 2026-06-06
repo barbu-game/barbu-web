@@ -29,7 +29,7 @@ export default function PlayingCard({ card, size = "md", playable, dimmed, highl
         SIZES[size],
         red ? "text-rose-600" : "text-slate-900",
         highlight
-          ? "-translate-y-1 border-amber-400 ring-4 ring-amber-400 shadow-amber-400/40"
+          ? "-translate-y-1 border-sky-400 ring-4 ring-sky-300/80 shadow-sky-400/30"
           : playable
             ? "cursor-pointer border-emerald-400 ring-2 ring-emerald-400/60 hover:-translate-y-2"
             : "border-slate-300",

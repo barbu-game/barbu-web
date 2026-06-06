@@ -1,15 +1,27 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import AudioControls from "./components/AudioControls";
 import AuthBar from "./components/AuthBar";
 import GameTable from "./components/GameTable";
 import { Home, RoomLobby } from "./components/Lobby";
+import { audio } from "./lib/audio";
 import type { AuthResult } from "./lib/auth";
+import { cardsOnTable } from "./lib/game";
 import { useGameSocket } from "./lib/useGameSocket";
 
 export default function Page() {
   const game = useGameSocket();
   const [, setAuth] = useState<AuthResult | null>(null);
+
+  const cardCount = cardsOnTable(game.state);
+  const previousCardCount = useRef(0);
+  useEffect(() => {
+    if (cardCount > previousCardCount.current) {
+      audio.playCard();
+    }
+    previousCardCount.current = cardCount;
+  }, [cardCount]);
 
   const { setAuthToken } = game;
   const handleAuthChange = useCallback(
@@ -49,6 +61,7 @@ export default function Page() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#134e4a_0%,_#0f172a_55%)] text-white">
+      <AudioControls />
       {content}
     </main>
   );
