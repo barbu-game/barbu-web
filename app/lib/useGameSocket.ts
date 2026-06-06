@@ -9,6 +9,7 @@ type Status = "idle" | "connecting" | "open" | "closed";
 
 export function useGameSocket() {
   const wsRef = useRef<WebSocket | null>(null);
+  const tokenRef = useRef<string | null>(null);
   const [state, setState] = useState<GameState | null>(null);
   const [seat, setSeat] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -48,21 +49,25 @@ export function useGameSocket() {
     wsRef.current?.send(JSON.stringify(payload));
   }, []);
 
+  const setAuthToken = useCallback((token: string | null) => {
+    tokenRef.current = token;
+  }, []);
+
   const createRoom = useCallback(
     (name: string, playerCount: number) =>
-      ensureSocket(() => send({ type: "createRoom", name, playerCount })),
+      ensureSocket(() => send({ type: "createRoom", name, playerCount, token: tokenRef.current })),
     [ensureSocket, send],
   );
 
   const join = useCallback(
     (name: string, code: string) =>
-      ensureSocket(() => send({ type: "join", name, roomId: code.toUpperCase() })),
+      ensureSocket(() => send({ type: "join", name, roomId: code.toUpperCase(), token: tokenRef.current })),
     [ensureSocket, send],
   );
 
   const quickMatch = useCallback(
     (name: string, size: number) =>
-      ensureSocket(() => send({ type: "enqueueMatchmaking", name, size })),
+      ensureSocket(() => send({ type: "enqueueMatchmaking", name, size, token: tokenRef.current })),
     [ensureSocket, send],
   );
 
@@ -75,5 +80,5 @@ export function useGameSocket() {
   const play = useCallback((move: MoveT) => send({ type: "play", move }), [send]);
   const castStopVote = useCallback((stop: boolean) => send({ type: "castStopVote", stop }), [send]);
 
-  return { state, seat, roomId, error, status, createRoom, join, quickMatch, addBot, start, chooseContract, play, castStopVote };
+  return { state, seat, roomId, error, status, setAuthToken, createRoom, join, quickMatch, addBot, start, chooseContract, play, castStopVote };
 }

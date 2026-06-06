@@ -1,22 +1,38 @@
 "use client";
 
+import { useCallback, useState } from "react";
+import AuthBar from "./components/AuthBar";
 import GameTable from "./components/GameTable";
 import { Home, RoomLobby } from "./components/Lobby";
+import type { AuthResult } from "./lib/auth";
 import { useGameSocket } from "./lib/useGameSocket";
 
 export default function Page() {
   const game = useGameSocket();
+  const [, setAuth] = useState<AuthResult | null>(null);
+
+  const { setAuthToken } = game;
+  const handleAuthChange = useCallback(
+    (auth: AuthResult | null) => {
+      setAuth(auth);
+      setAuthToken(auth?.token ?? null);
+    },
+    [setAuthToken],
+  );
 
   let content;
   if (!game.state) {
     content = (
-      <Home
-        onCreate={game.createRoom}
-        onJoin={game.join}
-        onQuickMatch={game.quickMatch}
-        error={game.error}
-        status={game.status}
-      />
+      <>
+        <AuthBar onAuthChange={handleAuthChange} />
+        <Home
+          onCreate={game.createRoom}
+          onJoin={game.join}
+          onQuickMatch={game.quickMatch}
+          error={game.error}
+          status={game.status}
+        />
+      </>
     );
   } else if (game.state.phase === "LOBBY") {
     content = <RoomLobby state={game.state} onAddBot={game.addBot} onStart={game.start} />;
