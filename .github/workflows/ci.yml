@@ -19,7 +19,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PAT with read:packages — GITHUB_TOKEN can't read a private package
+          # owned by another repo in the org. Stored as a repo secret.
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
       # The contract lives in the pinned @barbu-game/barbu-api; next build typechecks
       # against it, so any drift from the server's published types fails the build.
       - run: pnpm lint
