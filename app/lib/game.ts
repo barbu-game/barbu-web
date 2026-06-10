@@ -7,6 +7,9 @@ export type Player = { seat: number; name: string; bot: boolean; connected: bool
 
 export type Standing = { rank: number; seat: number; name: string; total: number };
 
+export type LastRoundRank = { rank: number; seat: number; name: string; points: number };
+export type LastRound = { contract: string; ranking: LastRoundRank[] };
+
 export type GameState = {
   type: "state";
   roomId: string;
@@ -32,7 +35,8 @@ export type GameState = {
   };
   board?: Record<string, { opened: boolean; low: number; high: number }>;
   yourLegalMoves?: MoveT[];
-  availableContracts?: string[];
+  nextContract?: string;
+  lastRound?: LastRound;
   standings?: Standing[];
   stopVote?: { open: boolean; humans: number; stopVotes: number; youVoted: boolean | null };
 };

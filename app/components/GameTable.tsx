@@ -29,12 +29,10 @@ function sortHand(hand: CardT[]): CardT[] {
 
 export default function GameTable({
   state,
-  onChooseContract,
   onPlay,
   onCastStopVote,
 }: {
   state: GameState;
-  onChooseContract: (contract: string) => void;
   onPlay: (move: MoveT) => void;
   onCastStopVote: (stop: boolean) => void;
 }) {
@@ -57,9 +55,7 @@ export default function GameTable({
         )}
       </div>
 
-      {state.phase === "CONTRACT_SELECTION" && (
-        <ContractPicker state={state} onChooseContract={onChooseContract} />
-      )}
+      {state.phase === "CONTRACT_SELECTION" && <RoundIntermission state={state} />}
 
       {state.phase === "PLAYING" && (
         <YourHand state={state} yourTurn={yourTurn} onPlay={onPlay} />
@@ -116,8 +112,12 @@ function TopBar({ state }: { state: GameState }) {
       <span>
         {state.contract ? (
           <b className="text-amber-300">{CONTRACT_LABEL[state.contract] ?? state.contract}</b>
+        ) : state.nextContract ? (
+          <span className="text-slate-400">
+            next: <b className="text-amber-300/80">{CONTRACT_LABEL[state.nextContract] ?? state.nextContract}</b>
+          </span>
         ) : (
-          <span className="text-slate-500">choosing contract…</span>
+          <span className="text-slate-500">dealing…</span>
         )}
       </span>
     </div>
@@ -234,33 +234,53 @@ function MontanteBoard({ state }: { state: GameState }) {
   );
 }
 
-function ContractPicker({
-  state,
-  onChooseContract,
-}: {
-  state: GameState;
-  onChooseContract: (contract: string) => void;
-}) {
-  if (state.currentActor !== state.yourSeat) {
-    return (
-      <p className="rounded-xl bg-slate-900/70 py-3 text-center text-sm text-slate-300 ring-1 ring-white/10">
-        Waiting for {state.players[state.dealer ?? 0]?.name} to choose a contract…
-      </p>
-    );
-  }
+function RoundIntermission({ state }: { state: GameState }) {
+  const next = state.nextContract;
+  const recap = state.lastRound;
+  const dealerName = state.players[state.dealer ?? 0]?.name;
   return (
-    <div className="rounded-xl bg-slate-900/70 p-4 ring-1 ring-white/10">
-      <p className="mb-3 text-center text-sm font-semibold text-white">You deal — choose a contract</p>
-      <div className="flex flex-wrap justify-center gap-2">
-        {(state.availableContracts ?? []).map((c) => (
-          <button
-            key={c}
-            onClick={() => onChooseContract(c)}
-            className="rounded-lg bg-amber-500/90 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-amber-400"
-          >
-            {CONTRACT_LABEL[c] ?? c}
-          </button>
-        ))}
+    <div className="animate-card-in rounded-2xl bg-slate-900/80 p-5 ring-1 ring-white/10">
+      {recap && (
+        <div className="mb-4">
+          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-400">
+            {CONTRACT_LABEL[recap.contract] ?? recap.contract} — round results
+          </p>
+          <ol className="space-y-1.5">
+            {recap.ranking.map((r) => (
+              <li
+                key={r.seat}
+                className={[
+                  "flex items-center justify-between rounded-lg px-3 py-1.5 ring-1",
+                  r.rank === 1 ? "bg-amber-500/15 ring-amber-400/50" : "bg-slate-800/60 ring-white/10",
+                ].join(" ")}
+              >
+                <span className="flex items-center gap-2 text-sm text-white">
+                  <span className={r.rank === 1 ? "text-amber-300" : "text-slate-500"}>#{r.rank}</span>
+                  <span className={r.seat === state.yourSeat ? "font-semibold text-emerald-300" : ""}>
+                    {r.name}
+                  </span>
+                </span>
+                <span
+                  className={[
+                    "font-mono text-sm",
+                    r.points > 0 ? "text-emerald-400" : r.points < 0 ? "text-rose-400" : "text-slate-400",
+                  ].join(" ")}
+                >
+                  {r.points > 0 ? `+${r.points}` : r.points}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+      <div className="rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-400/5 px-4 py-3 text-center ring-1 ring-amber-400/40">
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-200/70">
+          {recap ? "Next round" : "First round"}
+        </p>
+        <p className="mt-1 text-2xl font-black tracking-tight text-amber-200">
+          {next ? CONTRACT_LABEL[next] ?? next : "…"}
+        </p>
+        {dealerName && <p className="mt-1 text-xs text-amber-200/60">{dealerName} deals</p>}
       </div>
     </div>
   );

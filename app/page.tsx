@@ -52,7 +52,6 @@ export default function Page() {
     content = (
       <GameTable
         state={game.state}
-        onChooseContract={game.chooseContract}
         onPlay={game.play}
         onCastStopVote={game.castStopVote}
       />
