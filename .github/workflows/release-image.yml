@@ -1,0 +1,41 @@
+name: Release image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: version
+        uses: paulhatch/semantic-version@v6.0.2
+        with:
+          tag_prefix: v
+          version_format: "${major}.${minor}.${patch}"
+
+  build-image:
+    needs: version
+    permissions:
+      contents: read
+      packages: write
+    uses: barbu-game/barbu-actions/.github/workflows/build-push-image.yml@main
+    with:
+      image: barbu-web
+      version: ${{ needs.version.outputs.version }}
+      context: .
+      dockerfile: Dockerfile
+      build-args: |
+        NEXT_PUBLIC_WS_URL=wss://api.barbu.kour0.com/ws/game
+      npm-auth: true
+    secrets: inherit
