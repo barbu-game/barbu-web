@@ -1,3 +1,8 @@
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+# First-party contract client: we publish and consume it ourselves, so it must not
+# wait out pnpm 11's new-package quarantine (minimumReleaseAge) that guards against
+# fresh third-party malware. Without this, every contract republish breaks installs for ~24h.
+minimumReleaseAgeExclude:
+  - '@barbu-game/barbu-api'

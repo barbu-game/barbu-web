@@ -9,8 +9,9 @@ ARG NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 
 # Private @barbu-game/barbu-api lives on GitHub Packages; authenticate the install
-# via a BuildKit secret (no token baked into a layer).
-COPY package.json pnpm-lock.yaml ./
+# via a BuildKit secret (no token baked into a layer). pnpm-workspace.yaml carries the
+# minimumReleaseAgeExclude that lets the just-published contract client install.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=secret,id=node_auth \
     sh -c 'if [ -f /run/secrets/node_auth ]; then \
       printf "@barbu-game:registry=https://npm.pkg.github.com/\n//npm.pkg.github.com/:_authToken=%s\n" "$(cat /run/secrets/node_auth)" > .npmrc; \
