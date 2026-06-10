@@ -2,7 +2,9 @@
 # Next.js standalone output keeps the runtime image small.
 FROM node:22-alpine AS build
 WORKDIR /app
-RUN corepack enable
+# Pin pnpm 10 to match CI (pnpm/action-setup version: 10). corepack would pull pnpm 11,
+# whose stricter supply-chain + ignored-build defaults reject this lockfile.
+RUN npm install -g pnpm@10
 
 # NEXT_PUBLIC_* is inlined at build time, so the prod WS URL must be present here.
 ARG NEXT_PUBLIC_WS_URL
