@@ -1,9 +1,11 @@
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+import type { Variant, VariantContract } from "@barbu-game/barbu-api";
 
-// Mirrors the OpenAPI Variant / VariantContract schemas exposed by GET /variants.
-// TODO: replace with the generated type from @barbu-game/barbu-api once republished.
-export type VariantContract = { key: string; title: string; rule: string };
-export type Variant = { id: string; name: string; description: string; contracts: VariantContract[] };
+// Types come from the generated contract; the typecheck breaks if GET /variants drifts.
+// We keep an explicit fetch (rather than the generated `list()`) so it targets the
+// cross-origin API base in dev instead of a relative URL.
+export type { Variant, VariantContract };
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export async function fetchVariants(): Promise<Variant[]> {
   const res = await fetch(`${API}/variants`);
