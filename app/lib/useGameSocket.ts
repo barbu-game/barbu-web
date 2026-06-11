@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import type { ChatBroadcast } from "@barbu-game/barbu-api";
 import type { GameState, MoveT } from "./game";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080/ws/game";
@@ -15,6 +16,7 @@ export function useGameSocket() {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("idle");
+  const [messages, setMessages] = useState<ChatBroadcast[]>([]);
 
   const ensureSocket = useCallback((onReady: () => void) => {
     const existing = wsRef.current;
@@ -41,6 +43,8 @@ export function useGameSocket() {
         setError(msg.message);
       } else if (msg.type === "state") {
         setState(msg as GameState);
+      } else if (msg.type === "chat") {
+        setMessages((prev) => [...prev, msg as ChatBroadcast]);
       }
     };
   }, []);
@@ -75,6 +79,7 @@ export function useGameSocket() {
   const start = useCallback(() => send({ type: "start" }), [send]);
   const play = useCallback((move: MoveT) => send({ type: "play", move }), [send]);
   const castStopVote = useCallback((stop: boolean) => send({ type: "castStopVote", stop }), [send]);
+  const sendChat = useCallback((text: string) => send({ type: "chat", text }), [send]);
 
-  return { state, seat, roomId, error, status, setAuthToken, createRoom, join, quickMatch, addBot, start, play, castStopVote };
+  return { state, seat, roomId, error, status, messages, setAuthToken, createRoom, join, quickMatch, addBot, start, play, castStopVote, sendChat };
 }

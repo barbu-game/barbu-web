@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import AudioControls from "./components/AudioControls";
 import AuthBar from "./components/AuthBar";
+import ChatPanel from "./components/ChatPanel";
 import GameTable from "./components/GameTable";
 import { Home, RoomLobby } from "./components/Lobby";
 import { audio } from "./lib/audio";
@@ -62,6 +63,11 @@ export default function Page() {
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#134e4a_0%,_#0f172a_55%)] text-white">
       <AudioControls />
       {content}
+      {game.roomId && (
+        <div className="mx-auto w-full max-w-5xl px-4 pb-4">
+          <ChatPanel messages={game.messages} onSend={game.sendChat} disabled={game.seat === null} />
+        </div>
+      )}
     </main>
   );
 }
