@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   CONTRACT_LABEL,
   SUIT_SYMBOL,
@@ -12,7 +13,9 @@ import {
   type GameState,
   type MoveT,
 } from "../lib/game";
+import type { Variant } from "../lib/variants";
 import PlayingCard from "./PlayingCard";
+import VariantRules from "./VariantRules";
 
 const SUIT_ORDER = ["SPADES", "HEARTS", "CLUBS", "DIAMONDS"];
 const RANK_ORDER = [
@@ -29,18 +32,43 @@ function sortHand(hand: CardT[]): CardT[] {
 
 export default function GameTable({
   state,
+  variants,
   onPlay,
   onCastStopVote,
 }: {
   state: GameState;
+  variants: Variant[];
   onPlay: (move: MoveT) => void;
   onCastStopVote: (stop: boolean) => void;
 }) {
   const yourTurn = isYourTurn(state);
+  const [showRules, setShowRules] = useState(false);
+  const currentVariant = variants.find((v) => v.id === state.variant?.id);
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-4 p-4">
       <TopBar state={state} />
+      {currentVariant && (
+        <div className="rounded-xl bg-slate-900/70 px-4 py-2 ring-1 ring-white/10">
+          <button
+            type="button"
+            onClick={() => setShowRules((s) => !s)}
+            className="flex w-full items-center justify-between text-sm text-slate-300"
+          >
+            <span>
+              Variant: <b className="text-emerald-300">{currentVariant.name}</b>
+            </span>
+            <span className="text-xs text-emerald-300 underline-offset-2 hover:underline">
+              {showRules ? "Hide rules" : "Rules"}
+            </span>
+          </button>
+          {showRules && (
+            <div className="mt-2">
+              <VariantRules variant={currentVariant} />
+            </div>
+          )}
+        </div>
+      )}
       <PlayersStrip state={state} />
 
       {state.stopVote?.open && <VotePanel state={state} onCastStopVote={onCastStopVote} />}

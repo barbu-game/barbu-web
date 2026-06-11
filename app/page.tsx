@@ -10,10 +10,18 @@ import { audio } from "./lib/audio";
 import type { AuthResult } from "./lib/auth";
 import { cardsOnTable } from "./lib/game";
 import { useGameSocket } from "./lib/useGameSocket";
+import { fetchVariants, type Variant } from "./lib/variants";
 
 export default function Page() {
   const game = useGameSocket();
   const [, setAuth] = useState<AuthResult | null>(null);
+  const [variants, setVariants] = useState<Variant[]>([]);
+
+  useEffect(() => {
+    fetchVariants()
+      .then(setVariants)
+      .catch(() => setVariants([]));
+  }, []);
 
   const cardCount = cardsOnTable(game.state);
   const previousCardCount = useRef(0);
@@ -44,6 +52,7 @@ export default function Page() {
           onQuickMatch={game.quickMatch}
           error={game.error}
           status={game.status}
+          variants={variants}
         />
       </>
     );
@@ -53,6 +62,7 @@ export default function Page() {
     content = (
       <GameTable
         state={game.state}
+        variants={variants}
         onPlay={game.play}
         onCastStopVote={game.castStopVote}
       />

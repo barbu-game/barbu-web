@@ -58,8 +58,8 @@ export function useGameSocket() {
   }, []);
 
   const createRoom = useCallback(
-    (name: string, playerCount: number) =>
-      ensureSocket(() => send({ type: "createRoom", name, playerCount, token: tokenRef.current })),
+    (name: string, playerCount: number, variant: string) =>
+      ensureSocket(() => send({ type: "createRoom", name, playerCount, variant, token: tokenRef.current })),
     [ensureSocket, send],
   );
 

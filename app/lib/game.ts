@@ -37,6 +37,7 @@ export type GameState = {
   yourLegalMoves?: MoveT[];
   nextContract?: string;
   lastRound?: LastRound;
+  variant?: { id: string; name: string };
   standings?: Standing[];
   stopVote?: { open: boolean; humans: number; stopVotes: number; youVoted: boolean | null };
 };
@@ -58,6 +59,10 @@ export const CONTRACT_LABEL: Record<string, string> = {
   NO_HEARTS: "No hearts",
   NO_QUEENS: "No queens",
   NO_RED_KINGS: "No red kings",
+  NO_KING_OF_HEARTS: "King of Hearts",
+  NO_JACKS: "No jacks",
+  NO_LAST_TWO_TRICKS: "Last two tricks",
+  SALADE: "Salad",
   MONTANTE: "Montante",
 };
 

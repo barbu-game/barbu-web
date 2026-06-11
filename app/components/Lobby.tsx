@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { GameState } from "../lib/game";
+import type { Variant } from "../lib/variants";
+import VariantRules from "./VariantRules";
 
 export function Home({
   onCreate,
@@ -9,18 +11,23 @@ export function Home({
   onQuickMatch,
   error,
   status,
+  variants,
 }: {
-  onCreate: (name: string, playerCount: number) => void;
+  onCreate: (name: string, playerCount: number, variant: string) => void;
   onJoin: (name: string, code: string) => void;
   onQuickMatch: (name: string, size: number) => void;
   error: string | null;
   status: string;
+  variants: Variant[];
 }) {
   const [name, setName] = useState("");
   const [playerCount, setPlayerCount] = useState(4);
   const [code, setCode] = useState("");
+  const [variantId, setVariantId] = useState("developer");
+  const [showRules, setShowRules] = useState(false);
 
   const displayName = name.trim() || "Player";
+  const selectedVariant = variants.find((v) => v.id === variantId) ?? variants[0];
 
   return (
     <div className="mx-auto mt-16 w-full max-w-md rounded-2xl bg-slate-900/70 p-8 shadow-2xl ring-1 ring-white/10">
@@ -52,8 +59,34 @@ export function Home({
             ))}
           </select>
         </div>
+        <div className="mb-3">
+          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">Variant</label>
+          <select
+            value={variantId}
+            onChange={(e) => setVariantId(e.target.value)}
+            className="w-full rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 text-sm text-white"
+          >
+            {variants.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setShowRules((s) => !s)}
+            className="mt-1 text-xs text-emerald-300 underline-offset-2 hover:underline"
+          >
+            {showRules ? "Hide rules" : "Show rules"}
+          </button>
+          {showRules && selectedVariant && (
+            <div className="mt-2">
+              <VariantRules variant={selectedVariant} />
+            </div>
+          )}
+        </div>
         <button
-          onClick={() => onCreate(displayName, playerCount)}
+          onClick={() => onCreate(displayName, playerCount, variantId)}
           className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-white transition hover:bg-emerald-400"
         >
           Create table
