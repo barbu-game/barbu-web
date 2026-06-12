@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import AudioControls from "./components/AudioControls";
 import AuthBar from "./components/AuthBar";
+import FullscreenToggle from "./components/FullscreenToggle";
 import ChatPanel from "./components/ChatPanel";
 import GameTable from "./components/GameTable";
 import { Home, RoomLobby } from "./components/Lobby";
@@ -73,7 +74,10 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#134e4a_0%,_#0f172a_55%)] px-4 py-4 text-white sm:px-6">
-      <AudioControls />
+      <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
+        <FullscreenToggle />
+        <AudioControls />
+      </div>
       {content}
       {game.roomId && (
         <div className="mx-auto mt-6 w-full max-w-5xl">

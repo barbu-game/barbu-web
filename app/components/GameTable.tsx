@@ -47,7 +47,7 @@ export default function GameTable({
   const currentVariant = variants.find((v) => v.id === state.variant?.id);
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4 sm:min-h-screen">
       <TopBar state={state} />
       {currentVariant && (
         <div className="rounded-xl bg-slate-900/70 px-4 py-2 ring-1 ring-white/10">
@@ -74,7 +74,7 @@ export default function GameTable({
 
       {state.stopVote?.open && <VotePanel state={state} onCastStopVote={onCastStopVote} />}
 
-      <div className="flex flex-1 items-center justify-center rounded-2xl bg-emerald-950/40 p-6 ring-1 ring-white/5">
+      <div className="flex min-h-[40vh] items-center justify-center rounded-2xl bg-emerald-950/40 p-6 ring-1 ring-white/5 sm:min-h-0 sm:flex-1">
         {state.phase === "GAME_OVER" ? (
           <GameOver state={state} />
         ) : state.board ? (
@@ -133,7 +133,7 @@ function VotePanel({
 
 function TopBar({ state }: { state: GameState }) {
   return (
-    <div className="flex items-center justify-between rounded-xl bg-slate-900/70 px-4 py-2 text-sm text-slate-300 ring-1 ring-white/10">
+    <div className="flex items-center justify-between rounded-xl bg-slate-900/70 py-2 pl-4 pr-12 text-sm text-slate-300 ring-1 ring-white/10 sm:pr-4">
       <span className="font-mono tracking-widest text-emerald-400">{state.roomId}</span>
       <span>
         Round <b className="text-white">{(state.roundNumber ?? 0) + 1}</b> / {state.plannedRounds}
