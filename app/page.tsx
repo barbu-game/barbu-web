@@ -72,11 +72,11 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#134e4a_0%,_#0f172a_55%)] text-white">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#134e4a_0%,_#0f172a_55%)] px-4 py-4 text-white sm:px-6">
       <AudioControls />
       {content}
       {game.roomId && (
-        <div className="mx-auto w-full max-w-5xl px-4 pb-4">
+        <div className="mx-auto mt-6 w-full max-w-5xl">
           <ChatPanel messages={game.messages} onSend={game.sendChat} disabled={game.seat === null} />
         </div>
       )}
