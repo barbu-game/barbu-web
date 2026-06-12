@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import AudioControls from "./components/AudioControls";
 import AuthBar from "./components/AuthBar";
 import ChatPanel from "./components/ChatPanel";
@@ -12,7 +12,8 @@ import { cardsOnTable } from "./lib/game";
 import { useGameSocket } from "./lib/useGameSocket";
 import { fetchVariants, type Variant } from "./lib/variants";
 
-export default function Page() {
+export default function Page({ searchParams }: { searchParams: Promise<{ join?: string }> }) {
+  const { join } = use(searchParams);
   const game = useGameSocket();
   const [, setAuth] = useState<AuthResult | null>(null);
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -53,6 +54,7 @@ export default function Page() {
           error={game.error}
           status={game.status}
           variants={variants}
+          initialCode={(join ?? "").toUpperCase()}
         />
       </>
     );

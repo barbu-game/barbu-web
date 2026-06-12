@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { GameState } from "../lib/game";
 import type { Variant } from "../lib/variants";
 import VariantRules from "./VariantRules";
@@ -12,6 +12,7 @@ export function Home({
   error,
   status,
   variants,
+  initialCode,
 }: {
   onCreate: (name: string, playerCount: number, variant: string) => void;
   onJoin: (name: string, code: string) => void;
@@ -19,10 +20,12 @@ export function Home({
   error: string | null;
   status: string;
   variants: Variant[];
+  initialCode: string;
 }) {
   const [name, setName] = useState("");
   const [playerCount, setPlayerCount] = useState(4);
-  const [code, setCode] = useState("");
+  // An invite link lands here as /?join=CODE (passed in via searchParams) — seed the join box.
+  const [code, setCode] = useState(initialCode);
   const [variantId, setVariantId] = useState("developer");
   const [showRules, setShowRules] = useState(false);
 
@@ -138,12 +141,45 @@ export function RoomLobby({
   const filled = state.players.filter((p) => p.bot || p.connected).length;
   const full = filled === state.playerCount;
 
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const inviteLink = typeof window === "undefined" ? "" : `${window.location.origin}/?join=${state.roomId}`;
+
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(null), 1500);
+    return () => clearTimeout(t);
+  }, [copied]);
+
+  const copy = (text: string, what: "code" | "link") => {
+    navigator.clipboard?.writeText(text).then(() => setCopied(what));
+  };
+
   return (
     <div className="mx-auto mt-16 w-full max-w-lg rounded-2xl bg-slate-900/70 p-8 shadow-2xl ring-1 ring-white/10">
       <p className="text-center text-xs uppercase tracking-wide text-slate-400">Share this code</p>
-      <p className="mb-6 text-center font-mono text-5xl font-black tracking-[0.3em] text-emerald-400">
+      <button
+        type="button"
+        onClick={() => copy(state.roomId, "code")}
+        title="Copy code"
+        className="mx-auto mb-3 block font-mono text-5xl font-black tracking-[0.3em] text-emerald-400 transition hover:text-emerald-300"
+      >
         {state.roomId}
-      </p>
+      </button>
+      <div className="mb-6 flex items-center gap-2">
+        <input
+          readOnly
+          value={inviteLink}
+          onFocus={(e) => e.currentTarget.select()}
+          className="flex-1 truncate rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-xs text-slate-300 outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => copy(inviteLink, "link")}
+          className="shrink-0 rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-600"
+        >
+          {copied === "link" ? "Copied!" : copied === "code" ? "Code copied!" : "Copy link"}
+        </button>
+      </div>
 
       <ul className="mb-6 space-y-2">
         {state.players.map((p) => {

@@ -72,14 +72,18 @@ export const rankLabel = (rank: string) => RANK_LABEL[rank] ?? rank;
 
 export const cardKey = (card: CardT) => `${card.suit}-${card.rank}`;
 
-/** Montante column value (1=A .. 13=K) to a short label. */
-export function montanteLabel(value: number): string {
-  if (value <= 0) return "";
-  if (value === 1) return "A";
-  if (value === 11) return "J";
-  if (value === 12) return "Q";
-  if (value === 13) return "K";
-  return String(value);
+/** Montante column value (2 .. 13=K, 14=A) to the matching card rank. */
+const MONTANTE_VALUE_TO_RANK: Record<number, string> = {
+  2: "TWO", 3: "THREE", 4: "FOUR", 5: "FIVE", 6: "SIX", 7: "SEVEN", 8: "EIGHT",
+  9: "NINE", 10: "TEN", 11: "JACK", 12: "QUEEN", 13: "KING", 14: "ACE",
+};
+
+export const montanteRank = (value: number): string => MONTANTE_VALUE_TO_RANK[value] ?? String(value);
+
+/** The contiguous run of montante values currently laid down on a suit, low → high. */
+export function montanteRun(low: number, high: number): number[] {
+  if (low <= 0 || high < low) return [];
+  return Array.from({ length: high - low + 1 }, (_, i) => low + i);
 }
 
 export function isCardLegal(state: GameState, card: CardT): boolean {

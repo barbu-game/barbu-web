@@ -8,7 +8,8 @@ import {
   isCardLegal,
   isRedSuit,
   isYourTurn,
-  montanteLabel,
+  montanteRank,
+  montanteRun,
   type CardT,
   type GameState,
   type MoveT,
@@ -241,21 +242,27 @@ function TrickArea({ state }: { state: GameState }) {
 function MontanteBoard({ state }: { state: GameState }) {
   const board = state.board!;
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="flex w-full flex-col gap-3">
       {Object.entries(board).map(([suit, col]) => (
-        <div key={suit} className="flex flex-col items-center gap-2">
-          <span className={["text-3xl", isRedSuit(suit) ? "text-rose-500" : "text-slate-200"].join(" ")}>
+        <div key={suit} className="flex items-center gap-3">
+          <span
+            className={["w-7 shrink-0 text-center text-2xl", isRedSuit(suit) ? "text-rose-500" : "text-slate-200"].join(
+              " ",
+            )}
+          >
             {SUIT_SYMBOL[suit]}
           </span>
-          <div className="flex h-24 w-16 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-center text-sm text-slate-200">
-            {col.opened ? (
-              <span>
-                {montanteLabel(col.low)} – {montanteLabel(col.high)}
-              </span>
-            ) : (
-              <span className="text-slate-600">—</span>
-            )}
-          </div>
+          {col.opened ? (
+            <div className="flex flex-wrap">
+              {montanteRun(col.low, col.high).map((value, i) => (
+                <div key={value} className={i === 0 ? "" : "-ml-4"}>
+                  <PlayingCard card={{ suit, rank: montanteRank(value) }} size="sm" highlight={value === 8} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-sm italic text-slate-600">not opened yet</span>
+          )}
         </div>
       ))}
     </div>
