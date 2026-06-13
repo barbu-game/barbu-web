@@ -12,6 +12,10 @@ permissions:
 jobs:
   version:
     runs-on: ubuntu-latest
+    # Tagging the release is what lets semantic-version advance each time; without it the
+    # web image was stuck recomputing 0.1.0 forever.
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -23,6 +27,10 @@ jobs:
         with:
           tag_prefix: v
           version_format: "${major}.${minor}.${patch}"
+      - name: Tag the release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
 
   build-image:
     needs: version
