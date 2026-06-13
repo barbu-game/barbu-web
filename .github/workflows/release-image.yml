@@ -48,3 +48,11 @@ jobs:
         NEXT_PUBLIC_API_URL=https://api.barbu.kour0.com
       npm-auth: true
     secrets: inherit
+
+  bump-deploy:
+    needs: [version, build-image]
+    uses: barbu-game/barbu-actions/.github/workflows/bump-deploy.yml@main
+    with:
+      chart: charts/barbu-web
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
