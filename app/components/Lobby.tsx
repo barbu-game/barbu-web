@@ -11,6 +11,7 @@ export function Home({
   onQuickMatch,
   onRankedMatch,
   isLoggedIn,
+  username,
   error,
   status,
   variants,
@@ -21,6 +22,7 @@ export function Home({
   onQuickMatch: (name: string, size: number) => void;
   onRankedMatch: (name: string) => void;
   isLoggedIn: boolean;
+  username: string | null;
   error: string | null;
   status: string;
   variants: Variant[];
@@ -33,7 +35,8 @@ export function Home({
   const [variantId, setVariantId] = useState("developer");
   const [showRules, setShowRules] = useState(false);
 
-  const displayName = name.trim() || "Player";
+  // A signed-in player carries their account pseudo — no name to pick.
+  const displayName = username ?? (name.trim() || "Player");
   const selectedVariant = variants.find((v) => v.id === variantId) ?? variants[0];
 
   return (
@@ -44,12 +47,19 @@ export function Home({
       <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">
         Your name
       </label>
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Player"
-        className="mb-6 w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
-      />
+      {username ? (
+        <div className="mb-6 flex items-center justify-between rounded-lg border border-emerald-400/30 bg-slate-800 px-3 py-2">
+          <span className="font-semibold text-emerald-300">{username}</span>
+          <span className="text-xs text-slate-400">your account</span>
+        </div>
+      ) : (
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Player"
+          className="mb-6 w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+        />
+      )}
 
       <div className="mb-6 rounded-xl border border-white/10 p-4">
         <div className="mb-3 flex items-center justify-between">

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import AudioControls from "./components/AudioControls";
 import AuthBar from "./components/AuthBar";
 import FullscreenToggle from "./components/FullscreenToggle";
@@ -9,7 +9,7 @@ import GameTable from "./components/GameTable";
 import Leaderboard from "./components/Leaderboard";
 import { Home, RoomLobby } from "./components/Lobby";
 import { audio } from "./lib/audio";
-import type { AuthResult } from "./lib/auth";
+import { useAuth } from "./lib/auth";
 import { cardsOnTable } from "./lib/game";
 import { useGameSocket } from "./lib/useGameSocket";
 import { fetchVariants, type Variant } from "./lib/variants";
@@ -17,7 +17,7 @@ import { fetchVariants, type Variant } from "./lib/variants";
 export default function Page({ searchParams }: { searchParams: Promise<{ join?: string }> }) {
   const { join } = use(searchParams);
   const game = useGameSocket();
-  const [auth, setAuth] = useState<AuthResult | null>(null);
+  const auth = useAuth();
   const [variants, setVariants] = useState<Variant[]>([]);
 
   useEffect(() => {
@@ -35,26 +35,25 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
     previousCardCount.current = cardCount;
   }, [cardCount]);
 
+  // Keep the socket's auth token in step with the persisted session (incl. after a refresh).
+  // setAuthToken only writes a ref, so calling it from an effect triggers no re-render.
   const { setAuthToken } = game;
-  const handleAuthChange = useCallback(
-    (auth: AuthResult | null) => {
-      setAuth(auth);
-      setAuthToken(auth?.token ?? null);
-    },
-    [setAuthToken],
-  );
+  useEffect(() => {
+    setAuthToken(auth?.token ?? null);
+  }, [auth, setAuthToken]);
 
   let content;
   if (!game.state) {
     content = (
       <>
-        <AuthBar onAuthChange={handleAuthChange} />
+        <AuthBar />
         <Home
           onCreate={game.createRoom}
           onJoin={game.join}
           onQuickMatch={game.quickMatch}
           onRankedMatch={(name) => game.quickMatch(name, 4, true)}
           isLoggedIn={auth !== null}
+          username={auth?.username ?? null}
           error={game.error}
           status={game.status}
           variants={variants}

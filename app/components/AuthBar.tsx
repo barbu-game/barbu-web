@@ -1,27 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { login, register, type AuthResult } from "../lib/auth";
+import { login, register, setAuth, useAuth } from "../lib/auth";
 
-export default function AuthBar({ onAuthChange }: { onAuthChange: (auth: AuthResult | null) => void }) {
-  const [auth, setAuth] = useState<AuthResult | null>(null);
+export default function AuthBar() {
+  const auth = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const apply = (result: AuthResult) => {
-    setAuth(result);
-    onAuthChange(result);
-    setPassword("");
-  };
-
   const submit = async () => {
     setBusy(true);
     setError(null);
     try {
-      apply(await (mode === "login" ? login : register)({ username, password }));
+      setAuth(await (mode === "login" ? login : register)({ username, password }));
+      setPassword("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
     } finally {
@@ -29,10 +24,7 @@ export default function AuthBar({ onAuthChange }: { onAuthChange: (auth: AuthRes
     }
   };
 
-  const logout = () => {
-    setAuth(null);
-    onAuthChange(null);
-  };
+  const logout = () => setAuth(null);
 
   if (auth) {
     return (
