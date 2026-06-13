@@ -9,6 +9,8 @@ export function Home({
   onCreate,
   onJoin,
   onQuickMatch,
+  onRankedMatch,
+  isLoggedIn,
   error,
   status,
   variants,
@@ -17,6 +19,8 @@ export function Home({
   onCreate: (name: string, playerCount: number, variant: string) => void;
   onJoin: (name: string, code: string) => void;
   onQuickMatch: (name: string, size: number) => void;
+  onRankedMatch: (name: string) => void;
+  isLoggedIn: boolean;
   error: string | null;
   status: string;
   variants: Variant[];
@@ -100,6 +104,16 @@ export function Home({
         >
           Quick match
         </button>
+        {isLoggedIn ? (
+          <button
+            onClick={() => onRankedMatch(displayName)}
+            className="mt-2 w-full rounded-lg bg-amber-500 py-2 text-sm font-semibold text-white transition hover:bg-amber-400"
+          >
+            Ranked match
+          </button>
+        ) : (
+          <p className="mt-2 text-center text-xs text-slate-500">Log in to play ranked</p>
+        )}
       </div>
 
       <div className="rounded-xl border border-white/10 p-4">

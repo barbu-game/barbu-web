@@ -6,6 +6,7 @@ import AuthBar from "./components/AuthBar";
 import FullscreenToggle from "./components/FullscreenToggle";
 import ChatPanel from "./components/ChatPanel";
 import GameTable from "./components/GameTable";
+import Leaderboard from "./components/Leaderboard";
 import { Home, RoomLobby } from "./components/Lobby";
 import { audio } from "./lib/audio";
 import type { AuthResult } from "./lib/auth";
@@ -16,7 +17,7 @@ import { fetchVariants, type Variant } from "./lib/variants";
 export default function Page({ searchParams }: { searchParams: Promise<{ join?: string }> }) {
   const { join } = use(searchParams);
   const game = useGameSocket();
-  const [, setAuth] = useState<AuthResult | null>(null);
+  const [auth, setAuth] = useState<AuthResult | null>(null);
   const [variants, setVariants] = useState<Variant[]>([]);
 
   useEffect(() => {
@@ -52,11 +53,14 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
           onCreate={game.createRoom}
           onJoin={game.join}
           onQuickMatch={game.quickMatch}
+          onRankedMatch={(name) => game.quickMatch(name, 4, true)}
+          isLoggedIn={auth !== null}
           error={game.error}
           status={game.status}
           variants={variants}
           initialCode={(join ?? "").toUpperCase()}
         />
+        <Leaderboard />
       </>
     );
   } else if (game.state.phase === "LOBBY") {
@@ -66,6 +70,7 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
       <GameTable
         state={game.state}
         variants={variants}
+        rankedResults={game.rankedResults}
         onPlay={game.play}
         onCastStopVote={game.castStopVote}
       />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { ChatBroadcast } from "@barbu-game/barbu-api";
+import type { ChatBroadcast, RankedMessagesRankedResultEntry } from "@barbu-game/barbu-api";
 import type { GameState, MoveT } from "./game";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080/ws/game";
@@ -17,6 +17,7 @@ export function useGameSocket() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [messages, setMessages] = useState<ChatBroadcast[]>([]);
+  const [rankedResults, setRankedResults] = useState<RankedMessagesRankedResultEntry[] | null>(null);
 
   const ensureSocket = useCallback((onReady: () => void) => {
     const existing = wsRef.current;
@@ -45,6 +46,8 @@ export function useGameSocket() {
         setState(msg as GameState);
       } else if (msg.type === "chat") {
         setMessages((prev) => [...prev, msg as ChatBroadcast]);
+      } else if (msg.type === "rankedResult") {
+        setRankedResults(msg.entries as RankedMessagesRankedResultEntry[]);
       }
     };
   }, []);
@@ -70,8 +73,8 @@ export function useGameSocket() {
   );
 
   const quickMatch = useCallback(
-    (name: string, size: number) =>
-      ensureSocket(() => send({ type: "enqueueMatchmaking", name, size, token: tokenRef.current })),
+    (name: string, size: number, ranked = false) =>
+      ensureSocket(() => send({ type: "enqueueMatchmaking", name, size, ranked, token: tokenRef.current })),
     [ensureSocket, send],
   );
 
@@ -81,5 +84,5 @@ export function useGameSocket() {
   const castStopVote = useCallback((stop: boolean) => send({ type: "castStopVote", stop }), [send]);
   const sendChat = useCallback((text: string) => send({ type: "chat", text }), [send]);
 
-  return { state, seat, roomId, error, status, messages, setAuthToken, createRoom, join, quickMatch, addBot, start, play, castStopVote, sendChat };
+  return { state, seat, roomId, error, status, messages, rankedResults, setAuthToken, createRoom, join, quickMatch, addBot, start, play, castStopVote, sendChat };
 }

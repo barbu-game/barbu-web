@@ -14,6 +14,7 @@ import {
   type GameState,
   type MoveT,
 } from "../lib/game";
+import type { RankedMessagesRankedResultEntry } from "@barbu-game/barbu-api";
 import type { Variant } from "../lib/variants";
 import PlayingCard from "./PlayingCard";
 import VariantRules from "./VariantRules";
@@ -34,11 +35,13 @@ function sortHand(hand: CardT[]): CardT[] {
 export default function GameTable({
   state,
   variants,
+  rankedResults,
   onPlay,
   onCastStopVote,
 }: {
   state: GameState;
   variants: Variant[];
+  rankedResults: RankedMessagesRankedResultEntry[] | null;
   onPlay: (move: MoveT) => void;
   onCastStopVote: (stop: boolean) => void;
 }) {
@@ -76,7 +79,7 @@ export default function GameTable({
 
       <div className="flex min-h-[40vh] items-center justify-center rounded-2xl bg-emerald-950/40 p-6 ring-1 ring-white/5 sm:min-h-0 sm:flex-1">
         {state.phase === "GAME_OVER" ? (
-          <GameOver state={state} />
+          <GameOver state={state} rankedResults={rankedResults} />
         ) : state.board ? (
           <MontanteBoard state={state} />
         ) : (
@@ -365,27 +368,48 @@ function YourHand({
   );
 }
 
-function GameOver({ state }: { state: GameState }) {
+function GameOver({
+  state,
+  rankedResults,
+}: {
+  state: GameState;
+  rankedResults: RankedMessagesRankedResultEntry[] | null;
+}) {
   const standings = state.standings ?? [];
+  const eloBySeat = new Map((rankedResults ?? []).map((e) => [e.seat, e]));
   return (
     <div className="w-full max-w-sm">
       <h2 className="mb-4 text-center text-2xl font-black text-white">Final standings</h2>
       <ol className="space-y-2">
-        {standings.map((s) => (
-          <li
-            key={s.seat}
-            className={[
-              "flex items-center justify-between rounded-lg px-4 py-2 ring-1",
-              s.rank === 1 ? "bg-amber-500/20 ring-amber-400" : "bg-slate-900/60 ring-white/10",
-            ].join(" ")}
-          >
-            <span className="text-white">
-              <b className="mr-2 text-slate-400">#{s.rank}</b>
-              {s.name}
-            </span>
-            <span className="font-mono text-slate-200">{s.total}</span>
-          </li>
-        ))}
+        {standings.map((s) => {
+          const elo = eloBySeat.get(s.seat);
+          return (
+            <li
+              key={s.seat}
+              className={[
+                "flex items-center justify-between rounded-lg px-4 py-2 ring-1",
+                s.rank === 1 ? "bg-amber-500/20 ring-amber-400" : "bg-slate-900/60 ring-white/10",
+              ].join(" ")}
+            >
+              <span className="text-white">
+                <b className="mr-2 text-slate-400">#{s.rank}</b>
+                {s.name}
+              </span>
+              <span className="flex items-center gap-2">
+                {elo && (
+                  <span className="font-mono text-xs text-slate-400" title="ELO">
+                    {elo.ratingAfter}{" "}
+                    <span className={elo.delta >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                      ({elo.delta >= 0 ? "+" : ""}
+                      {elo.delta})
+                    </span>
+                  </span>
+                )}
+                <span className="font-mono text-slate-200">{s.total}</span>
+              </span>
+            </li>
+          );
+        })}
       </ol>
       <button
         onClick={() => window.location.reload()}
