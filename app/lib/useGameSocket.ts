@@ -18,6 +18,7 @@ export function useGameSocket() {
   const [status, setStatus] = useState<Status>("idle");
   const [messages, setMessages] = useState<ChatBroadcast[]>([]);
   const [rankedResults, setRankedResults] = useState<RankedMessagesRankedResultEntry[] | null>(null);
+  const [resumeUnavailable, setResumeUnavailable] = useState(false);
 
   const ensureSocket = useCallback((onReady: () => void) => {
     const existing = wsRef.current;
@@ -48,6 +49,8 @@ export function useGameSocket() {
         setMessages((prev) => [...prev, msg as ChatBroadcast]);
       } else if (msg.type === "rankedResult") {
         setRankedResults(msg.entries as RankedMessagesRankedResultEntry[]);
+      } else if (msg.type === "resumeUnavailable") {
+        setResumeUnavailable(true);
       }
     };
   }, []);
@@ -78,11 +81,17 @@ export function useGameSocket() {
     [ensureSocket, send],
   );
 
+  const resume = useCallback(
+    (resumeToken: string | null) =>
+      ensureSocket(() => send({ type: "resume", resumeToken, token: tokenRef.current })),
+    [ensureSocket, send],
+  );
+
   const addBot = useCallback(() => send({ type: "addBot" }), [send]);
   const start = useCallback(() => send({ type: "start" }), [send]);
   const play = useCallback((move: MoveT) => send({ type: "play", move }), [send]);
   const castStopVote = useCallback((stop: boolean) => send({ type: "castStopVote", stop }), [send]);
   const sendChat = useCallback((text: string) => send({ type: "chat", text }), [send]);
 
-  return { state, seat, roomId, error, status, messages, rankedResults, setAuthToken, createRoom, join, quickMatch, addBot, start, play, castStopVote, sendChat };
+  return { state, seat, roomId, error, status, messages, rankedResults, resumeUnavailable, setAuthToken, createRoom, join, quickMatch, resume, addBot, start, play, castStopVote, sendChat };
 }

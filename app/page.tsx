@@ -12,6 +12,7 @@ import { audio } from "./lib/audio";
 import { useAuth } from "./lib/auth";
 import { cardsOnTable } from "./lib/game";
 import { useGameSocket } from "./lib/useGameSocket";
+import { saveSession, loadSession, clearSession } from "./lib/session";
 import { fetchVariants, type Variant } from "./lib/variants";
 
 export default function Page({ searchParams }: { searchParams: Promise<{ join?: string }> }) {
@@ -41,6 +42,32 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
   useEffect(() => {
     setAuthToken(auth?.token ?? null);
   }, [auth, setAuthToken]);
+
+  // Tente de reprendre la partie en cours au chargement (le token de login est déjà synchronisé
+  // par l'effet ci-dessus ; le compte se ré-authentifie, l'invité présente son resume token).
+  const resumeTried = useRef(false);
+  useEffect(() => {
+    if (resumeTried.current) return;
+    resumeTried.current = true;
+    const stored = loadSession();
+    if (stored) game.resume(stored.resumeToken);
+    // au montage uniquement
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persiste la session tant qu'on tient un siège vivant ; purge en fin de partie.
+  useEffect(() => {
+    const s = game.state;
+    if (s && s.resumeToken && s.roomId && s.yourSeat !== undefined && s.yourSeat !== null) {
+      saveSession({ roomId: s.roomId, seat: s.yourSeat, resumeToken: s.resumeToken });
+    }
+    if (s && s.phase === "GAME_OVER") clearSession();
+  }, [game.state]);
+
+  // Session périmée (room GC'd, siège déjà repris…) → on purge.
+  useEffect(() => {
+    if (game.resumeUnavailable) clearSession();
+  }, [game.resumeUnavailable]);
 
   let content;
   if (!game.state) {

@@ -15,6 +15,7 @@ export type GameState = {
   roomId: string;
   playerCount: number;
   yourSeat: number;
+  resumeToken?: string;
   phase: Phase;
   players: Player[];
   dealer?: number;
