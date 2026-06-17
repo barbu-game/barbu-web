@@ -19,6 +19,9 @@ export function useGameSocket() {
   const [messages, setMessages] = useState<ChatBroadcast[]>([]);
   const [rankedResults, setRankedResults] = useState<RankedMessagesRankedResultEntry[] | null>(null);
   const [resumeUnavailable, setResumeUnavailable] = useState(false);
+  // En file de matchmaking : le serveur n'acquitte pas, on garde l'état localement jusqu'à ce
+  // qu'une partie arrive (message "state"), qu'une erreur tombe, ou que le joueur annule.
+  const [searching, setSearching] = useState(false);
 
   const ensureSocket = useCallback((onReady: () => void) => {
     const existing = wsRef.current;
@@ -34,17 +37,26 @@ export function useGameSocket() {
       setStatus("open");
       onReady();
     };
-    ws.onclose = () => setStatus("closed");
-    ws.onerror = () => setError("Connection error — is the server running?");
+    ws.onclose = () => {
+      setStatus("closed");
+      setSearching(false);
+    };
+    ws.onerror = () => {
+      setError("Connection error — is the server running?");
+      setSearching(false);
+    };
     ws.onmessage = (ev) => {
       const msg = JSON.parse(ev.data);
       if (msg.type === "joined") {
         setSeat(msg.seat);
         setRoomId(msg.roomId);
+        setSearching(false);
       } else if (msg.type === "error") {
         setError(msg.message);
+        setSearching(false);
       } else if (msg.type === "state") {
         setState(msg as GameState);
+        setSearching(false);
       } else if (msg.type === "chat") {
         setMessages((prev) => [...prev, msg as ChatBroadcast]);
       } else if (msg.type === "rankedResult") {
@@ -76,10 +88,17 @@ export function useGameSocket() {
   );
 
   const quickMatch = useCallback(
-    (name: string, size: number, ranked = false) =>
-      ensureSocket(() => send({ type: "enqueueMatchmaking", name, size, ranked, token: tokenRef.current })),
+    (name: string, size: number, ranked = false) => {
+      setSearching(true);
+      ensureSocket(() => send({ type: "enqueueMatchmaking", name, size, ranked, token: tokenRef.current }));
+    },
     [ensureSocket, send],
   );
+
+  const cancelMatch = useCallback(() => {
+    send({ type: "cancelMatchmaking" });
+    setSearching(false);
+  }, [send]);
 
   const resume = useCallback(
     (resumeToken: string | null) =>
@@ -93,5 +112,5 @@ export function useGameSocket() {
   const castStopVote = useCallback((stop: boolean) => send({ type: "castStopVote", stop }), [send]);
   const sendChat = useCallback((text: string) => send({ type: "chat", text }), [send]);
 
-  return { state, seat, roomId, error, status, messages, rankedResults, resumeUnavailable, setAuthToken, createRoom, join, quickMatch, resume, addBot, start, play, castStopVote, sendChat };
+  return { state, seat, roomId, error, status, messages, rankedResults, resumeUnavailable, searching, setAuthToken, createRoom, join, quickMatch, cancelMatch, resume, addBot, start, play, castStopVote, sendChat };
 }

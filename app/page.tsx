@@ -7,7 +7,7 @@ import FullscreenToggle from "./components/FullscreenToggle";
 import ChatPanel from "./components/ChatPanel";
 import GameTable from "./components/GameTable";
 import Leaderboard from "./components/Leaderboard";
-import { Home, RoomLobby } from "./components/Lobby";
+import { Home, RoomLobby, Searching } from "./components/Lobby";
 import { audio } from "./lib/audio";
 import { useAuth } from "./lib/auth";
 import { cardsOnTable } from "./lib/game";
@@ -70,7 +70,9 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
   }, [game.resumeUnavailable]);
 
   let content;
-  if (!game.state) {
+  if (!game.state && game.searching) {
+    content = <Searching onCancel={game.cancelMatch} />;
+  } else if (!game.state) {
     content = (
       <>
         <AuthBar />

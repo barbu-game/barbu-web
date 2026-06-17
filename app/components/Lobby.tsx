@@ -152,6 +152,22 @@ export function Home({
   );
 }
 
+export function Searching({ onCancel }: { onCancel: () => void }) {
+  return (
+    <div className="mx-auto mt-16 w-full max-w-md rounded-2xl bg-slate-900/70 p-8 text-center shadow-2xl ring-1 ring-white/10">
+      <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-2 border-emerald-400/30 border-t-emerald-400" />
+      <h2 className="mb-1 text-xl font-bold text-white">Finding a match…</h2>
+      <p className="mb-6 text-sm text-slate-400">Looking for players. This can take a moment.</p>
+      <button
+        onClick={onCancel}
+        className="w-full rounded-lg border border-white/10 bg-slate-800 py-2.5 font-semibold text-white transition hover:bg-slate-700"
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
+
 export function RoomLobby({
   state,
   onAddBot,
