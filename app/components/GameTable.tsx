@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CONTRACT_LABEL,
   SUIT_SYMBOL,
@@ -156,6 +156,24 @@ function TopBar({ state }: { state: GameState }) {
   );
 }
 
+function TurnTimerBar({ deadline }: { deadline: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const remaining = Math.max(0, deadline - Date.now());
+    // Restart the depletion from full each time the turn (deadline) changes.
+    el.style.animation = "none";
+    void el.offsetWidth;
+    el.style.animation = `turn-timer ${remaining}ms linear forwards`;
+  }, [deadline]);
+  return (
+    <div className="mt-1 h-1 w-full overflow-hidden rounded bg-slate-700/50">
+      <div ref={ref} className="h-full rounded" style={{ width: "100%", backgroundColor: "rgb(34 197 94)" }} />
+    </div>
+  );
+}
+
 function PlayersStrip({ state }: { state: GameState }) {
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
@@ -164,6 +182,8 @@ function PlayersStrip({ state }: { state: GameState }) {
         const isDealer = state.dealer === p.seat;
         const isTaker = state.trick?.complete && state.trick.taker === p.seat;
         const roundScore = state.roundScores?.[p.seat];
+        const offline = !p.bot && !p.connected;
+        const showTimer = active && !p.bot && typeof state.turnDeadlineEpochMs === "number";
         return (
           <div
             key={p.seat}
@@ -181,7 +201,11 @@ function PlayersStrip({ state }: { state: GameState }) {
                 {p.name}
                 {p.seat === state.yourSeat && <span className="ml-1 text-xs text-emerald-400">(you)</span>}
               </span>
-              {isTaker ? (
+              {offline ? (
+                <span className="text-[10px] font-semibold uppercase text-rose-300" title="disconnected">
+                  offline
+                </span>
+              ) : isTaker ? (
                 <span className="text-[10px] font-semibold uppercase text-sky-300">takes</span>
               ) : (
                 isDealer && <span className="text-[10px] uppercase text-amber-300">deal</span>
@@ -200,6 +224,7 @@ function PlayersStrip({ state }: { state: GameState }) {
                 </span>
               </span>
             </div>
+            {showTimer && <TurnTimerBar deadline={state.turnDeadlineEpochMs!} />}
           </div>
         );
       })}

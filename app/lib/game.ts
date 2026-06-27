@@ -23,6 +23,7 @@ export type GameState = {
   plannedRounds?: number;
   totals?: number[];
   currentActor?: number;
+  turnDeadlineEpochMs?: number;
   contract?: string;
   handCounts?: number[];
   yourHand?: CardT[];
