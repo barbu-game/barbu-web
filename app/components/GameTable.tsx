@@ -139,7 +139,7 @@ function TopBar({ state }: { state: GameState }) {
     <div className="flex items-center justify-between rounded-xl bg-slate-900/70 py-2 pl-4 pr-12 text-sm text-slate-300 ring-1 ring-white/10 sm:pr-4">
       <span className="font-mono tracking-widest text-emerald-400">{state.roomId}</span>
       <span>
-        Round <b className="text-white">{(state.roundNumber ?? 0) + 1}</b> / {state.plannedRounds}
+        Round <b className="text-white">{Math.min((state.roundNumber ?? 0) + 1, state.plannedRounds ?? Infinity)}</b> / {state.plannedRounds}
       </span>
       <span>
         {state.contract ? (
