@@ -13,6 +13,7 @@ import { useAuth } from "./lib/auth";
 import { cardsOnTable } from "./lib/game";
 import { useGameSocket } from "./lib/useGameSocket";
 import { saveSession, loadSession, clearSession } from "./lib/session";
+import { installReconnect } from "./lib/reconnect";
 import { fetchVariants, type Variant } from "./lib/variants";
 
 export default function Page({ searchParams }: { searchParams: Promise<{ join?: string }> }) {
@@ -54,6 +55,22 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
     // au montage uniquement
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Reprise au retour de l'app : sur mobile, quitter l'onglet (p. ex. pour partager le lien
+  // d'invitation) suspend la page et tue le WebSocket sans recharger. L'effet de montage ci-dessus
+  // ne rejouant pas, on relance un `resume` dès que l'onglet redevient visible ou que le réseau
+  // revient, tant que le socket est mort et qu'une session est stockée.
+  const { resume, status } = game;
+  useEffect(
+    () =>
+      installReconnect({
+        isVisible: () => document.visibilityState === "visible",
+        isSocketOpen: () => status === "open",
+        loadSession,
+        resume,
+      }),
+    [status, resume],
+  );
 
   // Persiste la session tant qu'on tient un siège vivant ; purge en fin de partie.
   useEffect(() => {
