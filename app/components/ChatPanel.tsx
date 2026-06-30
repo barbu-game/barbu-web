@@ -42,13 +42,19 @@ export default function ChatPanel({
   return (
     <div className="flex h-64 w-full flex-col rounded-xl bg-slate-900/70 ring-1 ring-white/10">
       <div className="flex-1 space-y-1 overflow-y-auto p-3 text-sm">
-        {messages.map((m, i) => (
-          <p key={i}>
-            <span className={`font-semibold ${SEAT_COLORS[m.seat % SEAT_COLORS.length]}`}>{m.name}</span>
-            <span className="text-slate-500">: </span>
-            <span className="text-slate-200">{m.text}</span>
-          </p>
-        ))}
+        {messages.map((m, i) =>
+          m.system ? (
+            <p key={i} className="italic text-slate-400">
+              — {m.text}
+            </p>
+          ) : (
+            <p key={i}>
+              <span className={`font-semibold ${SEAT_COLORS[m.seat % SEAT_COLORS.length]}`}>{m.name}</span>
+              <span className="text-slate-500">: </span>
+              <span className="text-slate-200">{m.text}</span>
+            </p>
+          ),
+        )}
         <div ref={endRef} />
       </div>
       <div className="flex gap-2 border-t border-white/10 p-2">
