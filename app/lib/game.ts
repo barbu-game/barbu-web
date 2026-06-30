@@ -42,6 +42,8 @@ export type GameState = {
   variant?: { id: string; name: string };
   standings?: Standing[];
   stopVote?: { open: boolean; humans: number; stopVotes: number; youVoted: boolean | null };
+  pauseVote?: { open: boolean; humans: number; pauseVotes: number; youVoted: boolean | null };
+  paused?: { active: boolean; endsAtMs: number };
 };
 
 export const SUIT_SYMBOL: Record<string, string> = {

@@ -118,6 +118,8 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
         rankedResults={game.rankedResults}
         onPlay={game.play}
         onCastStopVote={game.castStopVote}
+        onCastPauseVote={game.castPauseVote}
+        onResume={game.resumeGame}
       />
     );
   }
@@ -131,7 +133,20 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
       {content}
       {game.roomId && (
         <div className="mx-auto mt-6 w-full max-w-5xl">
-          <ChatPanel messages={game.messages} onSend={game.sendChat} disabled={game.seat === null} />
+          <ChatPanel
+            messages={game.messages}
+            onSend={(text) => {
+              const cmd = text.trim().toLowerCase();
+              if (cmd === "/pause") {
+                game.castPauseVote(true);
+              } else if (cmd === "/resume") {
+                game.resumeGame();
+              } else {
+                game.sendChat(text);
+              }
+            }}
+            disabled={game.seat === null}
+          />
         </div>
       )}
     </main>

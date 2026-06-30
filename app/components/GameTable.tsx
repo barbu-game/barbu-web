@@ -38,12 +38,16 @@ export default function GameTable({
   rankedResults,
   onPlay,
   onCastStopVote,
+  onCastPauseVote,
+  onResume,
 }: {
   state: GameState;
   variants: Variant[];
   rankedResults: RankedMessagesRankedResultEntry[] | null;
   onPlay: (move: MoveT) => void;
   onCastStopVote: (stop: boolean) => void;
+  onCastPauseVote: (pause: boolean) => void;
+  onResume: () => void;
 }) {
   const yourTurn = isYourTurn(state);
   const [showRules, setShowRules] = useState(false);
@@ -76,6 +80,8 @@ export default function GameTable({
       <PlayersStrip state={state} />
 
       {state.stopVote?.open && <VotePanel state={state} onCastStopVote={onCastStopVote} />}
+      {state.pauseVote?.open && <PauseVotePanel state={state} onCastPauseVote={onCastPauseVote} />}
+      {state.paused?.active && <PauseOverlay endsAtMs={state.paused.endsAtMs} onResume={onResume} />}
 
       <div className="flex min-h-[40vh] items-center justify-center rounded-2xl bg-emerald-950/40 p-6 ring-1 ring-white/5 sm:min-h-0 sm:flex-1">
         {state.phase === "GAME_OVER" ? (
@@ -130,6 +136,69 @@ function VotePanel({
         </button>
       </div>
       {voted && <p className="mt-2 text-xs text-amber-200/60">Vote cast — waiting for others…</p>}
+    </div>
+  );
+}
+
+function PauseVotePanel({
+  state,
+  onCastPauseVote,
+}: {
+  state: GameState;
+  onCastPauseVote: (pause: boolean) => void;
+}) {
+  const vote = state.pauseVote!;
+  const voted = vote.youVoted !== null && vote.youVoted !== undefined;
+  return (
+    <div className="rounded-xl bg-sky-500/15 p-4 text-center ring-1 ring-sky-400/40">
+      <p className="text-sm font-semibold text-sky-200">A player asked for a one-minute break — pause now?</p>
+      <p className="mt-1 text-xs text-sky-200/70">
+        {vote.pauseVotes} of {vote.humans} voted to pause
+      </p>
+      <div className="mt-3 flex justify-center gap-3">
+        <button
+          onClick={() => onCastPauseVote(false)}
+          disabled={voted}
+          className="rounded-lg bg-emerald-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400 disabled:opacity-40"
+        >
+          Keep playing
+        </button>
+        <button
+          onClick={() => onCastPauseVote(true)}
+          disabled={voted}
+          className="rounded-lg bg-sky-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:opacity-40"
+        >
+          Pause
+        </button>
+      </div>
+      {voted && <p className="mt-2 text-xs text-sky-200/60">Vote cast — waiting for others…</p>}
+    </div>
+  );
+}
+
+function PauseOverlay({ endsAtMs, onResume }: { endsAtMs: number; onResume: () => void }) {
+  const [remaining, setRemaining] = useState(() => Math.max(0, Math.ceil((endsAtMs - Date.now()) / 1000)));
+  useEffect(() => {
+    const tick = () => setRemaining(Math.max(0, Math.ceil((endsAtMs - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [endsAtMs]);
+  const mm = Math.floor(remaining / 60);
+  const ss = String(remaining % 60).padStart(2, "0");
+  return (
+    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-slate-950/80 backdrop-blur-sm">
+      <p className="text-sm font-semibold uppercase tracking-widest text-sky-300">Game paused</p>
+      <p className="font-mono text-6xl font-black text-white tabular-nums">
+        {mm}:{ss}
+      </p>
+      <button
+        onClick={onResume}
+        className="rounded-lg bg-emerald-500 px-6 py-2.5 font-semibold text-white transition hover:bg-emerald-400"
+      >
+        Resume now
+      </button>
+      <p className="text-xs text-slate-400">or type /resume in chat</p>
     </div>
   );
 }
