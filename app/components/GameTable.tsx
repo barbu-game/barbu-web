@@ -17,6 +17,7 @@ import {
 import type { RankedMessagesRankedResultEntry } from "@barbu-game/barbu-api";
 import type { Variant } from "../lib/variants";
 import PlayingCard from "./PlayingCard";
+import CapturedArea from "./CapturedArea";
 import VariantRules from "./VariantRules";
 
 const SUIT_ORDER = ["SPADES", "HEARTS", "CLUBS", "DIAMONDS"];
@@ -294,6 +295,11 @@ function PlayersStrip({ state }: { state: GameState }) {
               </span>
             </div>
             {showTimer && <TurnTimerBar deadline={state.turnDeadlineEpochMs!} />}
+            <CapturedArea
+              cards={state.captured?.[p.seat] ?? []}
+              contract={state.contract}
+              playerCount={state.playerCount}
+            />
           </div>
         );
       })}

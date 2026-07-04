@@ -28,6 +28,7 @@ export type GameState = {
   handCounts?: number[];
   yourHand?: CardT[];
   roundScores?: number[];
+  captured?: CardT[][];
   resolving?: boolean;
   trick?: {
     leader: number;
