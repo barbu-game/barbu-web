@@ -258,7 +258,7 @@ function PlayersStrip({ state }: { state: GameState }) {
           <div
             key={p.seat}
             className={[
-              "rounded-xl px-3 py-2 ring-1 transition",
+              "flex flex-col rounded-xl px-3 py-2 ring-1 transition",
               isTaker
                 ? "bg-sky-500/15 ring-sky-400"
                 : active
@@ -266,19 +266,19 @@ function PlayersStrip({ state }: { state: GameState }) {
                   : "bg-slate-900/60 ring-white/10",
             ].join(" ")}
           >
-            <div className="flex items-center justify-between">
-              <span className="truncate text-sm font-semibold text-white">
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0 truncate text-sm font-semibold text-white">
                 {p.name}
                 {p.seat === state.yourSeat && <span className="ml-1 text-xs text-emerald-400">(you)</span>}
               </span>
               {offline ? (
-                <span className="text-[10px] font-semibold uppercase text-rose-300" title="disconnected">
+                <span className="shrink-0 text-[10px] font-semibold uppercase text-rose-300" title="disconnected">
                   offline
                 </span>
               ) : isTaker ? (
-                <span className="text-[10px] font-semibold uppercase text-sky-300">takes</span>
+                <span className="shrink-0 text-[10px] font-semibold uppercase text-sky-300">takes</span>
               ) : (
-                isDealer && <span className="text-[10px] uppercase text-amber-300">deal</span>
+                isDealer && <span className="shrink-0 text-[10px] uppercase text-amber-300">deal</span>
               )}
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
@@ -295,11 +295,13 @@ function PlayersStrip({ state }: { state: GameState }) {
               </span>
             </div>
             {showTimer && <TurnTimerBar deadline={state.turnDeadlineEpochMs!} />}
-            <CapturedArea
-              cards={state.captured?.[p.seat] ?? []}
-              contract={state.contract}
-              playerCount={state.playerCount}
-            />
+            <div className="mt-auto">
+              <CapturedArea
+                cards={state.captured?.[p.seat] ?? []}
+                contract={state.contract}
+                playerCount={state.playerCount}
+              />
+            </div>
           </div>
         );
       })}
