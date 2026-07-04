@@ -11,11 +11,12 @@ describe("CapturedArea", () => {
     expect(html).toBe("");
   });
 
-  it("renders something for a captured trick under NO_TRICKS", () => {
+  it("renders a captured trick under NO_TRICKS with the top card face-up", () => {
     const trick = [c("SPADES", "TWO"), c("HEARTS", "THREE"), c("CLUBS", "FOUR")];
     const html = renderToStaticMarkup(<CapturedArea cards={trick} contract="NO_TRICKS" playerCount={3} />);
     expect(html).not.toBe("");
-    expect(html).toContain("♥");
+    expect(html).toContain("♥"); // a sliver color peeks out
+    expect(html).toContain("4"); // the top card (CLUBS FOUR) shows its rank
   });
 
   it("renders the captured queen under NO_QUEENS", () => {
