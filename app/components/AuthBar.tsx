@@ -58,6 +58,7 @@ export default function AuthBar() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="username"
+          maxLength={40}
           className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-sm text-white outline-none focus:border-emerald-400"
         />
         <input

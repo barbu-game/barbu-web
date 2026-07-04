@@ -57,6 +57,7 @@ export function Home({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Player"
+          maxLength={40}
           className="mb-6 w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
         />
       )}

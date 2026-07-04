@@ -325,10 +325,13 @@ function TrickArea({ state }: { state: GameState }) {
           return (
             <div
               key={`${play.seat}-${play.card.suit}-${play.card.rank}`}
-              className="animate-card-in flex flex-col items-center gap-1"
+              className="animate-card-in flex w-20 flex-col items-center gap-1"
             >
               <PlayingCard card={play.card} size="lg" highlight={isTaker} />
-              <span className={isTaker ? "text-xs font-semibold text-sky-300" : "text-xs text-slate-400"}>
+              <span
+                title={state.players[play.seat]?.name}
+                className={`block w-full truncate text-center text-xs ${isTaker ? "font-semibold text-sky-300" : "text-slate-400"}`}
+              >
                 {state.players[play.seat]?.name}
               </span>
             </div>
