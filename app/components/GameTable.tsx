@@ -298,7 +298,7 @@ function PlayersStrip({ state }: { state: GameState }) {
             <div className="mt-auto">
               <CapturedArea
                 cards={state.captured?.[p.seat] ?? []}
-                contract={state.contract}
+                contract={state.contract ?? undefined}
                 playerCount={state.playerCount}
               />
             </div>
@@ -315,13 +315,12 @@ function TrickArea({ state }: { state: GameState }) {
   if (plays.length === 0) {
     return <p className="text-slate-500">Waiting for the first card…</p>;
   }
-  const takerName =
-    trick?.complete && trick.taker !== undefined ? state.players[trick.taker]?.name : null;
+  const takerName = trick?.complete && trick.taker != null ? state.players[trick.taker]?.name : null;
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex flex-wrap items-center justify-center gap-4">
         {plays.map((play) => {
-          const isTaker = trick?.complete && play.seat === trick.taker;
+          const isTaker = Boolean(trick?.complete && play.seat === trick.taker);
           return (
             <div
               key={`${play.seat}-${play.card.suit}-${play.card.rank}`}

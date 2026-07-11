@@ -46,7 +46,13 @@ export function useGameSocket() {
       setSearching(false);
     };
     ws.onmessage = (ev) => {
-      const msg = JSON.parse(ev.data);
+      let msg;
+      try {
+        msg = JSON.parse(ev.data);
+      } catch {
+        setError("Received a malformed message from the server.");
+        return;
+      }
       if (msg.type === "joined") {
         setSeat(msg.seat);
         setRoomId(msg.roomId);

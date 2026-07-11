@@ -1,51 +1,14 @@
-export type Phase = "LOBBY" | "CONTRACT_SELECTION" | "PLAYING" | "GAME_OVER";
+import type {
+  GameStateMessage,
+  GameStateMessageCardView,
+  GameStateMessageMoveView,
+} from "@barbu-game/barbu-api";
 
-export type CardT = { suit: string; rank: string };
-export type MoveT = { kind: "card"; suit: string; rank: string } | { kind: "pass" };
-
-export type Player = { seat: number; name: string; bot: boolean; connected: boolean };
-
-export type Standing = { rank: number; seat: number; name: string; total: number };
-
-export type LastRoundRank = { rank: number; seat: number; name: string; points: number };
-export type LastRound = { contract: string; ranking: LastRoundRank[] };
-
-export type GameState = {
-  type: "state";
-  roomId: string;
-  playerCount: number;
-  yourSeat: number;
-  resumeToken?: string;
-  phase: Phase;
-  players: Player[];
-  dealer?: number;
-  roundNumber?: number;
-  plannedRounds?: number;
-  totals?: number[];
-  currentActor?: number;
-  turnDeadlineEpochMs?: number;
-  contract?: string;
-  handCounts?: number[];
-  yourHand?: CardT[];
-  roundScores?: number[];
-  captured?: CardT[][];
-  resolving?: boolean;
-  trick?: {
-    leader: number;
-    plays: { seat: number; card: CardT }[];
-    complete?: boolean;
-    taker?: number;
-  };
-  board?: Record<string, { opened: boolean; low: number; high: number }>;
-  yourLegalMoves?: MoveT[];
-  nextContract?: string;
-  lastRound?: LastRound;
-  variant?: { id: string; name: string };
-  standings?: Standing[];
-  stopVote?: { open: boolean; humans: number; stopVotes: number; youVoted: boolean | null };
-  pauseVote?: { open: boolean; humans: number; pauseVotes: number; youVoted: boolean | null };
-  paused?: { active: boolean; endsAtMs: number };
-};
+// Source unique du contrat (getout) : ces types sont générés depuis l'OpenAPI du serveur,
+// donc tout drift de la forme du message `state` casse le typecheck ici plutôt qu'à l'exécution.
+export type GameState = GameStateMessage;
+export type CardT = GameStateMessageCardView;
+export type MoveT = GameStateMessageMoveView;
 
 export const SUIT_SYMBOL: Record<string, string> = {
   CLUBS: "♣",
