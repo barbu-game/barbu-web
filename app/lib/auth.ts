@@ -1,9 +1,13 @@
 import { useSyncExternalStore } from "react";
-import type { AuthControllerCredentials } from "@barbu-game/barbu-api";
+import type {
+  AuthControllerApiError,
+  AuthControllerAuthToken,
+  AuthControllerCredentials,
+} from "@barbu-game/barbu-api";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
-export type AuthResult = { token: string; username: string };
+export type AuthResult = AuthControllerAuthToken;
 
 async function post(path: string, body: AuthControllerCredentials): Promise<AuthResult> {
   const res = await fetch(`${API}${path}`, {
@@ -12,7 +16,7 @@ async function post(path: string, body: AuthControllerCredentials): Promise<Auth
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const detail = await res.json().catch(() => ({}));
+    const detail: Partial<AuthControllerApiError> = await res.json().catch(() => ({}));
     throw new Error(detail.error ?? `Request failed (${res.status})`);
   }
   return res.json();

@@ -12,12 +12,3 @@ export async function fetchVariants(): Promise<Variant[]> {
   if (!res.ok) throw new Error(`Failed to load variants (${res.status})`);
   return res.json();
 }
-
-/** A flat key -> title map across all variants (for labelling contracts in the UI). */
-export function contractTitles(variants: Variant[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const v of variants) {
-    for (const c of v.contracts) map[c.key] = c.title;
-  }
-  return map;
-}
