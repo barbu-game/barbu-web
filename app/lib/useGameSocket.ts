@@ -113,6 +113,15 @@ export function useGameSocket() {
   );
 
   const addBot = useCallback(() => send({ type: "addBot" }), [send]);
+  const renameBot = useCallback((seat: number, name: string) => send({ type: "renameBot", seat, name }), [send]);
+  const leave = useCallback(() => {
+    send({ type: "leave" });
+    setState(null);
+    setSeat(null);
+    setRoomId(null);
+    setError(null);
+    setMessages([]);
+  }, [send]);
   const start = useCallback(() => send({ type: "start" }), [send]);
   const play = useCallback((move: MoveT) => send({ type: "play", move }), [send]);
   const castStopVote = useCallback((stop: boolean) => send({ type: "castStopVote", stop }), [send]);
@@ -120,5 +129,5 @@ export function useGameSocket() {
   const resumeGame = useCallback(() => send({ type: "resumeGame" }), [send]);
   const sendChat = useCallback((text: string) => send({ type: "chat", text }), [send]);
 
-  return { state, seat, roomId, error, status, messages, rankedResults, resumeUnavailable, searching, setAuthToken, createRoom, join, quickMatch, cancelMatch, resume, addBot, start, play, castStopVote, castPauseVote, resumeGame, sendChat };
+  return { state, seat, roomId, error, status, messages, rankedResults, resumeUnavailable, searching, setAuthToken, createRoom, join, quickMatch, cancelMatch, resume, addBot, renameBot, leave, start, play, castStopVote, castPauseVote, resumeGame, sendChat };
 }

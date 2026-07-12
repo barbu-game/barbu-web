@@ -109,7 +109,18 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
       </>
     );
   } else if (game.state.phase === "LOBBY") {
-    content = <RoomLobby state={game.state} onAddBot={game.addBot} onStart={game.start} />;
+    content = (
+      <RoomLobby
+        state={game.state}
+        onAddBot={game.addBot}
+        onStart={game.start}
+        onRenameBot={game.renameBot}
+        onLeave={() => {
+          clearSession();
+          game.leave();
+        }}
+      />
+    );
   } else {
     content = (
       <GameTable
