@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import type { GameState } from "../lib/game";
 import type { Variant } from "../lib/variants";
 import { loadGuestName, saveGuestName } from "../lib/guest";
+import { useT } from "../lib/i18n";
+import Panel from "../ui/Panel";
+import Button from "../ui/Button";
+import Crest from "../ui/Crest";
 import VariantRules from "./VariantRules";
+
+const FIELD =
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-foreground outline-none focus:border-gold-soft";
 
 export function Home({
   onCreate,
@@ -29,6 +36,7 @@ export function Home({
   variants: Variant[];
   initialCode: string;
 }) {
+  const t = useT();
   const [name, setName] = useState(() => loadGuestName());
   const [playerCount, setPlayerCount] = useState(4);
   // An invite link lands here as /?join=CODE (passed in via searchParams) — seed the join box.
@@ -46,52 +54,59 @@ export function Home({
   };
 
   return (
-    <div className="mx-auto mt-16 w-full max-w-md rounded-2xl bg-slate-900/70 p-8 shadow-2xl ring-1 ring-white/10">
-      <h1 className="mb-1 text-center text-4xl font-black tracking-tight text-white">Le Barbu</h1>
-      <p className="mb-8 text-center text-sm text-slate-400">Trick-taking, online, 2–10 players</p>
+    <Panel className="mx-auto mt-16 w-full max-w-md p-8 shadow-2xl">
+      <div className="mb-6 flex flex-col items-center">
+        <Crest size={60} />
+        <h1 className="mt-4 bg-gradient-to-b from-[#fde9c8] to-gold bg-clip-text font-display text-4xl font-bold tracking-[0.08em] text-transparent">
+          LE BARBU
+        </h1>
+        <p className="mt-2 max-w-xs text-center text-sm font-light text-muted-fg">{t("app.tagline")}</p>
+      </div>
 
-      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">
-        Your name
+      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-fg">
+        {t("home.yourName")}
       </label>
       {username ? (
-        <div className="mb-6 flex items-center justify-between rounded-lg border border-emerald-400/30 bg-slate-800 px-3 py-2">
-          <span className="font-semibold text-emerald-300">{username}</span>
-          <span className="text-xs text-slate-400">your account</span>
+        <div className="mb-6 flex items-center justify-between rounded-lg border border-gold-soft/30 bg-surface px-3 py-2">
+          <span className="font-semibold text-gold-soft">{username}</span>
+          <span className="text-xs text-muted-fg">{t("home.yourAccount")}</span>
         </div>
       ) : (
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Player"
+          placeholder={t("home.namePlaceholder")}
           maxLength={40}
-          className="mb-6 w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-emerald-400"
+          className={`mb-6 ${FIELD}`}
         />
       )}
 
-      <div className="mb-6 rounded-xl border border-white/10 p-4">
+      <div className="mb-6 rounded-xl border border-border p-4">
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm font-semibold text-white">New table</span>
+          <span className="text-sm font-semibold text-foreground">{t("home.newTable")}</span>
           <select
             value={playerCount}
             onChange={(e) => setPlayerCount(Number(e.target.value))}
-            className="rounded-md border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white"
+            className="rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground"
           >
             {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
-              <option key={n} value={n}>
-                {n} players
+              <option key={n} value={n} className="bg-background">
+                {t("home.players", { n })}
               </option>
             ))}
           </select>
         </div>
         <div className="mb-3">
-          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">Variant</label>
+          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-fg">
+            {t("home.variant")}
+          </label>
           <select
             value={variantId}
             onChange={(e) => setVariantId(e.target.value)}
-            className="w-full rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 text-sm text-white"
+            className="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-foreground"
           >
             {variants.map((v) => (
-              <option key={v.id} value={v.id}>
+              <option key={v.id} value={v.id} className="bg-background">
                 {v.name}
               </option>
             ))}
@@ -99,9 +114,9 @@ export function Home({
           <button
             type="button"
             onClick={() => setShowRules((s) => !s)}
-            className="mt-1 text-xs text-emerald-300 underline-offset-2 hover:underline"
+            className="mt-1 text-xs text-gold-soft underline-offset-2 hover:underline"
           >
-            {showRules ? "Hide rules" : "Show rules"}
+            {showRules ? t("home.hideRules") : t("home.showRules")}
           </button>
           {showRules && selectedVariant && (
             <div className="mt-2">
@@ -109,78 +124,80 @@ export function Home({
             </div>
           )}
         </div>
-        <button
-          onClick={() => {
-            remember(name);
-            onCreate(displayName, playerCount, variantId);
-          }}
-          className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-white transition hover:bg-emerald-400"
-        >
-          Create table
-        </button>
-        <button
+        <Button
+          variant="gold"
+          className="w-full"
           onClick={() => {
             remember(name);
             onQuickMatch(displayName, playerCount);
           }}
-          className="mt-2 w-full rounded-lg border border-emerald-400/40 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-400/10"
         >
-          Quick match
-        </button>
+          {t("home.quickMatch")}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-2 w-full"
+          onClick={() => {
+            remember(name);
+            onCreate(displayName, playerCount, variantId);
+          }}
+        >
+          {t("home.createTable")}
+        </Button>
         {isLoggedIn ? (
-          <button
-            onClick={() => onRankedMatch(displayName)}
-            className="mt-2 w-full rounded-lg bg-amber-500 py-2 text-sm font-semibold text-white transition hover:bg-amber-400"
-          >
-            Ranked match
-          </button>
+          <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => onRankedMatch(displayName)}>
+            {t("home.ranked")}
+          </Button>
         ) : (
-          <p className="mt-2 text-center text-xs text-slate-500">Log in to play ranked</p>
+          <p className="mt-2 text-center text-xs text-muted-fg">{t("home.loginForRanked")}</p>
         )}
       </div>
 
-      <div className="rounded-xl border border-white/10 p-4">
-        <span className="mb-3 block text-sm font-semibold text-white">Join with a code</span>
+      <div className="rounded-xl border border-border p-4">
+        <span className="mb-3 block text-sm font-semibold text-foreground">{t("home.joinTitle")}</span>
         <div className="flex gap-2">
           <input
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="ABCDE"
             maxLength={5}
-            className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 font-mono uppercase tracking-widest text-white outline-none focus:border-emerald-400"
+            className={`${FIELD} font-mono uppercase tracking-widest`}
           />
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0"
             onClick={() => {
               remember(name);
               onJoin(displayName, code);
             }}
             disabled={code.length < 4}
-            className="rounded-lg bg-slate-700 px-5 font-semibold text-white transition hover:bg-slate-600 disabled:opacity-40"
           >
-            Join
-          </button>
+            {t("home.joinButton")}
+          </Button>
         </div>
       </div>
 
-      {error && <p className="mt-4 text-center text-sm text-rose-400">{error}</p>}
-      {status === "connecting" && <p className="mt-4 text-center text-sm text-slate-400">Connecting…</p>}
-    </div>
+      {error && <p className="mt-4 text-center text-sm text-danger">{error}</p>}
+      {status === "connecting" && (
+        <p className="mt-4 text-center text-sm text-muted-fg">{t("status.connecting")}</p>
+      )}
+    </Panel>
   );
 }
 
 export function Searching({ onCancel }: { onCancel: () => void }) {
+  const t = useT();
   return (
-    <div className="mx-auto mt-16 w-full max-w-md rounded-2xl bg-slate-900/70 p-8 text-center shadow-2xl ring-1 ring-white/10">
-      <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-2 border-emerald-400/30 border-t-emerald-400" />
-      <h2 className="mb-1 text-xl font-bold text-white">Finding a match…</h2>
-      <p className="mb-6 text-sm text-slate-400">Looking for players. This can take a moment.</p>
-      <button
-        onClick={onCancel}
-        className="w-full rounded-lg border border-white/10 bg-slate-800 py-2.5 font-semibold text-white transition hover:bg-slate-700"
-      >
-        Cancel
-      </button>
-    </div>
+    <Panel className="mx-auto mt-16 w-full max-w-md p-8 text-center shadow-2xl">
+      <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-2 border-gold-soft/30 border-t-gold-soft" />
+      <h2 className="mb-1 font-display text-xl font-semibold text-foreground">{t("searching.title")}</h2>
+      <p className="mb-6 text-sm text-muted-fg">{t("searching.subtitle")}</p>
+      <Button variant="ghost" className="w-full" onClick={onCancel}>
+        {t("searching.cancel")}
+      </Button>
+    </Panel>
   );
 }
 
@@ -209,7 +226,7 @@ function BotNameInput({ name, onCommit }: { name: string; onCommit: (n: string) 
       onKeyDown={(e) => {
         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
       }}
-      className="w-40 rounded border border-white/10 bg-slate-900/60 px-2 py-1 text-sm text-white outline-none focus:border-emerald-400"
+      className="w-40 rounded border border-border bg-surface px-2 py-1 text-sm text-foreground outline-none focus:border-gold-soft"
     />
   );
 }
@@ -227,6 +244,7 @@ export function RoomLobby({
   onLeave: () => void;
   onRenameBot: (seat: number, name: string) => void;
 }) {
+  const t = useT();
   const humanSeats = state.players.filter((p) => !p.bot && p.connected).map((p) => p.seat);
   const hostSeat = humanSeats.length ? Math.min(...humanSeats) : -1;
   const isHost = state.yourSeat === hostSeat;
@@ -241,8 +259,8 @@ export function RoomLobby({
 
   useEffect(() => {
     if (!copied) return;
-    const t = setTimeout(() => setCopied(null), 1500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setCopied(null), 1500);
+    return () => clearTimeout(timer);
   }, [copied]);
 
   const copy = (text: string, what: "code" | "link") => {
@@ -250,13 +268,13 @@ export function RoomLobby({
   };
 
   return (
-    <div className="mx-auto mt-16 w-full max-w-lg rounded-2xl bg-slate-900/70 p-8 shadow-2xl ring-1 ring-white/10">
-      <p className="text-center text-xs uppercase tracking-wide text-slate-400">Share this code</p>
+    <Panel className="mx-auto mt-16 w-full max-w-lg p-8 shadow-2xl">
+      <p className="text-center text-xs uppercase tracking-wide text-muted-fg">{t("lobby.shareCode")}</p>
       <button
         type="button"
         onClick={() => copy(state.roomId, "code")}
-        title="Copy code"
-        className="mx-auto mb-3 block font-mono text-5xl font-black tracking-[0.3em] text-emerald-400 transition hover:text-emerald-300"
+        title={t("lobby.copyCode")}
+        className="mx-auto mb-3 block font-display text-5xl font-bold tracking-[0.3em] text-gold-soft transition hover:brightness-110"
       >
         {state.roomId}
       </button>
@@ -265,15 +283,16 @@ export function RoomLobby({
           readOnly
           value={inviteLink}
           onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 truncate rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-xs text-slate-300 outline-none"
+          className="flex-1 truncate rounded-lg border border-border bg-surface px-3 py-2 text-xs text-muted-fg outline-none"
         />
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="shrink-0"
           onClick={() => copy(inviteLink, "link")}
-          className="shrink-0 rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-600"
         >
-          {copied === "link" ? "Copied!" : copied === "code" ? "Code copied!" : "Copy link"}
-        </button>
+          {copied === "link" ? t("lobby.copied") : copied === "code" ? t("lobby.codeCopied") : t("lobby.copyLink")}
+        </Button>
       </div>
 
       <ul className="mb-6 space-y-2">
@@ -283,24 +302,24 @@ export function RoomLobby({
           return (
             <li
               key={p.seat}
-              className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-800/60 px-4 py-2"
+              className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-2"
             >
-              <span className="flex items-center gap-2 text-white">
+              <span className="flex items-center gap-2 text-foreground">
                 {p.bot && isHost ? (
                   <BotNameInput name={p.name} onCommit={(n) => onRenameBot(p.seat, n)} />
                 ) : open ? (
-                  <span className="italic text-slate-500">Empty seat</span>
+                  <span className="italic text-muted-fg">{t("lobby.emptySeat")}</span>
                 ) : (
-                  <span className={away ? "text-slate-400" : undefined}>
+                  <span className={away ? "text-muted-fg" : undefined}>
                     {p.name}
-                    {away && <span className="ml-1 text-xs italic text-amber-300/80">(disconnected)</span>}
+                    {away && <span className="ml-1 text-xs italic text-gold-soft/80">({t("lobby.disconnected")})</span>}
                   </span>
                 )}
-                {p.seat === state.yourSeat && <span className="text-xs text-emerald-400">(you)</span>}
-                {p.seat === hostSeat && <span className="text-xs text-amber-300">(host)</span>}
+                {p.seat === state.yourSeat && <span className="text-xs text-gold-soft">({t("table.you")})</span>}
+                {p.seat === hostSeat && <span className="text-xs text-gold">({t("lobby.host")})</span>}
               </span>
-              <span className="text-xs uppercase tracking-wide text-slate-400">
-                {p.bot ? "Bot" : open ? "—" : away ? "Away" : "Human"}
+              <span className="text-xs uppercase tracking-wide text-muted-fg">
+                {p.bot ? t("table.bot") : open ? "—" : away ? t("lobby.away") : t("table.human")}
               </span>
             </li>
           );
@@ -309,31 +328,23 @@ export function RoomLobby({
 
       {isHost ? (
         <div className="flex gap-3">
-          <button
-            onClick={onAddBot}
-            disabled={full}
-            className="flex-1 rounded-lg bg-slate-700 py-2.5 font-semibold text-white transition hover:bg-slate-600 disabled:opacity-40"
-          >
-            Add bot
-          </button>
-          <button
-            onClick={onStart}
-            disabled={!full}
-            className="flex-1 rounded-lg bg-emerald-500 py-2.5 font-semibold text-white transition hover:bg-emerald-400 disabled:opacity-40"
-          >
-            Start game
-          </button>
+          <Button variant="ghost" className="flex-1" onClick={onAddBot} disabled={full}>
+            {t("lobby.addBot")}
+          </Button>
+          <Button variant="gold" className="flex-1" onClick={onStart} disabled={!full}>
+            {t("lobby.start")}
+          </Button>
         </div>
       ) : (
-        <p className="mb-3 text-center text-sm text-slate-400">Waiting for the host to start…</p>
+        <p className="mb-3 text-center text-sm text-muted-fg">{t("lobby.waitingHost")}</p>
       )}
 
       <button
         onClick={onLeave}
-        className="mt-3 w-full rounded-lg border border-rose-400/40 py-2 text-sm font-semibold text-rose-300 transition hover:bg-rose-400/10"
+        className="mt-3 w-full rounded-lg border border-danger/40 py-2 text-sm font-semibold text-danger transition hover:bg-danger/10"
       >
-        Leave table
+        {t("lobby.leaveTable")}
       </button>
-    </div>
+    </Panel>
   );
 }

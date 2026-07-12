@@ -4,6 +4,7 @@ import { use, useEffect, useRef, useState } from "react";
 import AudioControls from "./components/AudioControls";
 import AuthBar from "./components/AuthBar";
 import FullscreenToggle from "./components/FullscreenToggle";
+import LocaleSwitcher from "./ui/LocaleSwitcher";
 import ChatPanel from "./components/ChatPanel";
 import GameTable from "./components/GameTable";
 import Leaderboard from "./components/Leaderboard";
@@ -136,8 +137,9 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#134e4a_0%,_#0f172a_55%)] px-4 py-4 text-white sm:px-6">
-      <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
+    <main className="min-h-dvh px-4 py-4 text-foreground sm:px-6">
+      <div className="fixed right-4 top-4 z-[60] flex items-center gap-2">
+        <LocaleSwitcher />
         <FullscreenToggle />
         <AudioControls />
       </div>

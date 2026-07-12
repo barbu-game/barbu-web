@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { Volume2, VolumeX } from "lucide-react";
 import { audio } from "../lib/audio";
+import { useT } from "../lib/i18n";
 
 export default function AudioControls() {
+  const t = useT();
   const [on, setOn] = useState(true);
 
   const toggle = () => {
@@ -12,14 +15,15 @@ export default function AudioControls() {
     audio.setSfx(next);
   };
 
+  const label = on ? t("controls.soundsOn") : t("controls.soundsOff");
   return (
     <button
       onClick={toggle}
-      title={on ? "Card sounds on" : "Card sounds off"}
-      className="flex items-center gap-1.5 rounded-full bg-slate-900/70 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10 transition hover:bg-slate-800"
+      title={label}
+      aria-label={label}
+      className="flex items-center rounded-full border border-border bg-surface px-3 py-2 text-muted-fg transition hover:text-foreground"
     >
-      <span>{on ? "🔊" : "🔇"}</span>
-      <span className="hidden text-xs sm:inline">Cards</span>
+      {on ? <Volume2 size={18} /> : <VolumeX size={18} />}
     </button>
   );
 }

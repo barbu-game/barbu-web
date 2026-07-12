@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { login, register, setAuth, useAuth } from "../lib/auth";
+import { useT } from "../lib/i18n";
+import Panel from "../ui/Panel";
+import Button from "../ui/Button";
 
 export default function AuthBar() {
+  const t = useT();
   const auth = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
@@ -18,7 +22,7 @@ export default function AuthBar() {
       setAuth(await (mode === "login" ? login : register)({ username, password }));
       setPassword("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      setError(e instanceof Error ? e.message : t("auth.failed"));
     } finally {
       setBusy(false);
     }
@@ -28,55 +32,49 @@ export default function AuthBar() {
 
   if (auth) {
     return (
-      <div className="mx-auto mt-6 flex w-full max-w-md items-center justify-between rounded-xl bg-slate-900/60 px-4 py-2 text-sm ring-1 ring-white/10">
-        <span className="text-slate-300">
-          Signed in as <b className="text-emerald-300">{auth.username}</b>
-        </span>
-        <button onClick={logout} className="text-slate-400 underline hover:text-white">
-          Log out
+      <Panel className="mx-auto mt-6 flex w-full max-w-md items-center justify-between px-4 py-2 text-sm">
+        <span className="text-muted-fg">{t("auth.signedInAs", { name: auth.username })}</span>
+        <button onClick={logout} className="text-muted-fg underline hover:text-foreground">
+          {t("auth.logout")}
         </button>
-      </div>
+      </Panel>
     );
   }
 
   return (
-    <div className="mx-auto mt-6 w-full max-w-md rounded-xl bg-slate-900/60 p-4 ring-1 ring-white/10">
-      <div className="mb-3 flex gap-2 text-sm">
+    <Panel className="mx-auto mt-6 w-full max-w-md p-4">
+      <div className="mb-3 flex gap-3 text-sm">
         {(["login", "register"] as const).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={mode === m ? "font-semibold text-emerald-300" : "text-slate-400"}
+            className={mode === m ? "font-semibold text-gold-soft" : "text-muted-fg"}
           >
-            {m === "login" ? "Log in" : "Register"}
+            {m === "login" ? t("auth.login") : t("auth.register")}
           </button>
         ))}
-        <span className="ml-auto text-xs text-slate-500">optional — or play as guest</span>
+        <span className="ml-auto text-xs text-muted-fg">{t("auth.optional")}</span>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="username"
+          placeholder={t("auth.username")}
           maxLength={40}
-          className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-sm text-white outline-none focus:border-emerald-400"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground outline-none focus:border-gold-soft"
         />
         <input
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           type="password"
-          placeholder="password"
-          className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-sm text-white outline-none focus:border-emerald-400"
+          placeholder={t("auth.password")}
+          className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground outline-none focus:border-gold-soft"
         />
-        <button
-          onClick={submit}
-          disabled={busy || !username || !password}
-          className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-40"
-        >
-          {mode === "login" ? "Log in" : "Register"}
-        </button>
+        <Button variant="gold" size="sm" onClick={submit} disabled={busy || !username || !password}>
+          {mode === "login" ? t("auth.login") : t("auth.register")}
+        </Button>
       </div>
-      {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
-    </div>
+      {error && <p className="mt-2 text-xs text-danger">{error}</p>}
+    </Panel>
   );
 }

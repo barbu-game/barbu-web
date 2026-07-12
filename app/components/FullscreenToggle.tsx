@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Maximize, Minimize } from "lucide-react";
+import { useT } from "../lib/i18n";
 
 export default function FullscreenToggle() {
+  const t = useT();
   const [full, setFull] = useState(false);
 
   useEffect(() => {
@@ -20,14 +23,15 @@ export default function FullscreenToggle() {
     }
   };
 
+  const label = full ? t("controls.exitFullscreen") : t("controls.fullscreen");
   return (
     <button
       onClick={toggle}
-      title={full ? "Exit fullscreen" : "Fullscreen"}
-      aria-label={full ? "Exit fullscreen" : "Fullscreen"}
-      className="flex items-center gap-1.5 rounded-full bg-slate-900/70 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10 transition hover:bg-slate-800"
+      title={label}
+      aria-label={label}
+      className="flex items-center rounded-full border border-border bg-surface px-3 py-2 text-muted-fg transition hover:text-foreground"
     >
-      <span>{full ? "🡾" : "⛶"}</span>
+      {full ? <Minimize size={18} /> : <Maximize size={18} />}
     </button>
   );
 }

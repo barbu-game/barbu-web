@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Send } from "lucide-react";
 import type { ChatBroadcast } from "@barbu-game/barbu-api";
+import { useT } from "../lib/i18n";
+import Panel from "../ui/Panel";
+import Button from "../ui/Button";
 
 const SEAT_COLORS = [
   "text-emerald-300",
@@ -25,6 +29,7 @@ export default function ChatPanel({
   onSend: (text: string) => void;
   disabled: boolean;
 }) {
+  const t = useT();
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
 
@@ -40,24 +45,24 @@ export default function ChatPanel({
   };
 
   return (
-    <div className="flex h-64 w-full flex-col rounded-xl bg-slate-900/70 ring-1 ring-white/10">
+    <Panel className="flex h-64 w-full flex-col">
       <div className="flex-1 space-y-1 overflow-y-auto p-3 text-sm">
         {messages.map((m, i) =>
           m.system ? (
-            <p key={i} className="italic text-slate-400">
+            <p key={i} className="italic text-muted-fg">
               — {m.text}
             </p>
           ) : (
             <p key={i}>
               <span className={`font-semibold ${SEAT_COLORS[m.seat % SEAT_COLORS.length]}`}>{m.name}</span>
-              <span className="text-slate-500">: </span>
-              <span className="text-slate-200">{m.text}</span>
+              <span className="text-muted-fg">: </span>
+              <span className="text-foreground">{m.text}</span>
             </p>
           ),
         )}
         <div ref={endRef} />
       </div>
-      <div className="flex gap-2 border-t border-white/10 p-2">
+      <div className="flex gap-2 border-t border-border p-2">
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -66,17 +71,13 @@ export default function ChatPanel({
           }}
           maxLength={280}
           disabled={disabled}
-          placeholder={disabled ? "Join a table to chat" : "Message…"}
-          className="flex-1 rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-emerald-400 disabled:opacity-40"
+          placeholder={disabled ? t("chat.joinToChat") : t("chat.message")}
+          className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground outline-none focus:border-gold-soft disabled:opacity-40"
         />
-        <button
-          onClick={submit}
-          disabled={disabled}
-          className="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-400 disabled:opacity-40"
-        >
-          Send
-        </button>
+        <Button variant="gold" size="sm" onClick={submit} disabled={disabled} aria-label={t("chat.send")}>
+          <Send size={16} />
+        </Button>
       </div>
-    </div>
+    </Panel>
   );
 }
