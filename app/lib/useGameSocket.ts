@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatBroadcast, RankedMessagesRankedResultEntry } from "@barbu-game/barbu-api";
 import type { GameState, MoveT } from "./game";
+import { buildPodWsUrl } from "./redirect";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080/ws/game";
 
@@ -11,6 +12,12 @@ type Status = "idle" | "connecting" | "open" | "closed";
 export function useGameSocket() {
   const wsRef = useRef<WebSocket | null>(null);
   const tokenRef = useRef<string | null>(null);
+  // URL de connexion courante (peut être réécrite vers un pod propriétaire sur redirect) et
+  // dernier resume token, rejoué à l'identique après un redirect.
+  const urlRef = useRef<string>(WS_URL);
+  const resumeTokenRef = useRef<string | null>(null);
+  // Indirection stable pour rouvrir le socket depuis un handler (redirect) sans dépendance circulaire.
+  const connectRef = useRef<(onReady: () => void) => void>(() => {});
   const [state, setState] = useState<GameState | null>(null);
   const [seat, setSeat] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -23,6 +30,10 @@ export function useGameSocket() {
   // qu'une partie arrive (message "state"), qu'une erreur tombe, ou que le joueur annule.
   const [searching, setSearching] = useState(false);
 
+  const send = useCallback((payload: unknown) => {
+    wsRef.current?.send(JSON.stringify(payload));
+  }, []);
+
   const ensureSocket = useCallback((onReady: () => void) => {
     const existing = wsRef.current;
     if (existing && existing.readyState === WebSocket.OPEN) {
@@ -31,7 +42,7 @@ export function useGameSocket() {
     }
     setStatus("connecting");
     setError(null);
-    const ws = new WebSocket(WS_URL);
+    const ws = new WebSocket(urlRef.current);
     wsRef.current = ws;
     ws.onopen = () => {
       setStatus("open");
@@ -69,13 +80,23 @@ export function useGameSocket() {
         setRankedResults(msg.entries as RankedMessagesRankedResultEntry[]);
       } else if (msg.type === "resumeUnavailable") {
         setResumeUnavailable(true);
+      } else if (msg.type === "redirect") {
+        // La partie vit sur un autre pod : on rebranche le socket dessus et on rejoue le resume.
+        urlRef.current = buildPodWsUrl(WS_URL, msg.pod);
+        const token = resumeTokenRef.current;
+        try {
+          ws.close();
+        } catch {
+          // socket already closing; the fresh connect below is what matters
+        }
+        connectRef.current(() => send({ type: "resume", resumeToken: token, token: tokenRef.current }));
       }
     };
-  }, []);
+  }, [send]);
 
-  const send = useCallback((payload: unknown) => {
-    wsRef.current?.send(JSON.stringify(payload));
-  }, []);
+  useEffect(() => {
+    connectRef.current = ensureSocket;
+  }, [ensureSocket]);
 
   const setAuthToken = useCallback((token: string | null) => {
     tokenRef.current = token;
@@ -107,8 +128,10 @@ export function useGameSocket() {
   }, [send]);
 
   const resume = useCallback(
-    (resumeToken: string | null) =>
-      ensureSocket(() => send({ type: "resume", resumeToken, token: tokenRef.current })),
+    (resumeToken: string | null) => {
+      resumeTokenRef.current = resumeToken;
+      ensureSocket(() => send({ type: "resume", resumeToken, token: tokenRef.current }));
+    },
     [ensureSocket, send],
   );
 
