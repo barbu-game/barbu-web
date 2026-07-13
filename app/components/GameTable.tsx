@@ -253,10 +253,10 @@ function VotePanel({
       <p className="text-sm font-semibold text-gold-soft">{t("vote.stopTitle")}</p>
       <p className="mt-1 text-xs text-gold-soft/70">{t("vote.stopCount", { n: vote.stopVotes, total: vote.humans })}</p>
       <div className="mt-3 flex justify-center gap-3">
-        <Button variant="success" size="sm" onClick={() => onCastStopVote(false)} disabled={voted}>
+        <Button data-testid="vote-stop-no" variant="success" size="sm" onClick={() => onCastStopVote(false)} disabled={voted}>
           {t("vote.keepPlaying")}
         </Button>
-        <Button variant="danger" size="sm" onClick={() => onCastStopVote(true)} disabled={voted}>
+        <Button data-testid="vote-stop-yes" variant="danger" size="sm" onClick={() => onCastStopVote(true)} disabled={voted}>
           {t("vote.stopHere")}
         </Button>
       </div>
@@ -280,10 +280,10 @@ function PauseVotePanel({
       <p className="text-sm font-semibold text-gold-soft">{t("vote.pauseTitle")}</p>
       <p className="mt-1 text-xs text-gold-soft/70">{t("vote.pauseCount", { n: vote.pauseVotes, total: vote.humans })}</p>
       <div className="mt-3 flex justify-center gap-3">
-        <Button variant="success" size="sm" onClick={() => onCastPauseVote(false)} disabled={voted}>
+        <Button data-testid="vote-pause-no" variant="success" size="sm" onClick={() => onCastPauseVote(false)} disabled={voted}>
           {t("vote.keepPlaying")}
         </Button>
-        <Button variant="gold" size="sm" onClick={() => onCastPauseVote(true)} disabled={voted}>
+        <Button data-testid="vote-pause-yes" variant="gold" size="sm" onClick={() => onCastPauseVote(true)} disabled={voted}>
           {t("vote.pause")}
         </Button>
       </div>
@@ -309,7 +309,7 @@ function PauseOverlay({ endsAtMs, onResume }: { endsAtMs: number; onResume: () =
       <p className="font-display text-6xl font-bold tabular-nums text-foreground">
         {mm}:{ss}
       </p>
-      <Button variant="success" onClick={onResume}>
+      <Button data-testid="resume-now" variant="success" onClick={onResume}>
         {t("pause.resumeNow")}
       </Button>
       <p className="text-xs text-muted-fg">{t("pause.orType")}</p>
@@ -321,7 +321,7 @@ function TopBar({ state }: { state: GameState }) {
   const t = useT();
   return (
     <Panel className="flex items-center justify-between py-2 pl-4 pr-12 text-sm text-muted-fg sm:pr-4">
-      <span className="font-display tracking-[0.24em] text-gold-soft">{state.roomId}</span>
+      <span data-testid="room-code" className="font-display tracking-[0.24em] text-gold-soft">{state.roomId}</span>
       <span>
         {t("table.round")}{" "}
         <b className="text-foreground">
@@ -496,13 +496,13 @@ function YourHand({
   const hand = sortHand(state.yourHand ?? []);
   const passable = yourTurn && canPass(state);
   return (
-    <Panel className="p-4">
+    <Panel data-testid="your-hand" className="p-4">
       <div className="mb-2 flex items-center justify-between">
         <span className={cn("text-sm", yourTurn ? "font-semibold text-gold-soft" : "text-muted-fg")}>
           {state.resolving ? t("table.collecting") : yourTurn ? t("table.yourTurn") : t("table.waiting")}
         </span>
         {passable && (
-          <Button variant="ghost" size="sm" onClick={() => onPlay({ kind: "pass" })}>
+          <Button data-testid="pass-button" variant="ghost" size="sm" onClick={() => onPlay({ kind: "pass" })}>
             {t("table.pass")}
           </Button>
         )}
@@ -537,7 +537,7 @@ function GameOver({
   const standings = state.standings ?? [];
   const eloBySeat = new Map((rankedResults ?? []).map((e) => [e.seat, e]));
   return (
-    <div className="w-full max-w-sm">
+    <div data-testid="final-standings" className="w-full max-w-sm">
       <h2 className="mb-4 text-center font-display text-2xl font-bold text-foreground">{t("over.finalStandings")}</h2>
       <ol className="space-y-2">
         {standings.map((s) => {
@@ -545,6 +545,7 @@ function GameOver({
           return (
             <li
               key={s.seat}
+              data-testid="standing-row"
               className={cn(
                 "flex items-center justify-between rounded-lg border px-4 py-2",
                 s.rank === 1 ? "border-gold-soft bg-gold/20" : "border-border bg-[rgba(6,26,15,0.55)]",

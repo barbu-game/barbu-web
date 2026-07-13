@@ -73,6 +73,7 @@ export function Home({
         </div>
       ) : (
         <input
+          data-testid="name-input"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={t("home.namePlaceholder")}
@@ -85,6 +86,7 @@ export function Home({
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm font-semibold text-foreground">{t("home.newTable")}</span>
           <select
+            data-testid="player-count"
             value={playerCount}
             onChange={(e) => setPlayerCount(Number(e.target.value))}
             className="rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground"
@@ -125,6 +127,7 @@ export function Home({
           )}
         </div>
         <Button
+          data-testid="quick-match"
           variant="gold"
           className="w-full"
           onClick={() => {
@@ -135,6 +138,7 @@ export function Home({
           {t("home.quickMatch")}
         </Button>
         <Button
+          data-testid="create-table"
           variant="ghost"
           size="sm"
           className="mt-2 w-full"
@@ -146,7 +150,7 @@ export function Home({
           {t("home.createTable")}
         </Button>
         {isLoggedIn ? (
-          <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => onRankedMatch(displayName)}>
+          <Button data-testid="ranked-match" variant="ghost" size="sm" className="mt-2 w-full" onClick={() => onRankedMatch(displayName)}>
             {t("home.ranked")}
           </Button>
         ) : (
@@ -158,6 +162,7 @@ export function Home({
         <span className="mb-3 block text-sm font-semibold text-foreground">{t("home.joinTitle")}</span>
         <div className="flex gap-2">
           <input
+            data-testid="join-code"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="ABCDE"
@@ -165,6 +170,7 @@ export function Home({
             className={`${FIELD} font-mono uppercase tracking-widest`}
           />
           <Button
+            data-testid="join-button"
             variant="ghost"
             size="sm"
             className="shrink-0"
@@ -194,7 +200,7 @@ export function Searching({ onCancel }: { onCancel: () => void }) {
       <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-2 border-gold-soft/30 border-t-gold-soft" />
       <h2 className="mb-1 font-display text-xl font-semibold text-foreground">{t("searching.title")}</h2>
       <p className="mb-6 text-sm text-muted-fg">{t("searching.subtitle")}</p>
-      <Button variant="ghost" className="w-full" onClick={onCancel}>
+      <Button data-testid="cancel-search" variant="ghost" className="w-full" onClick={onCancel}>
         {t("searching.cancel")}
       </Button>
     </Panel>
@@ -272,6 +278,7 @@ export function RoomLobby({
       <p className="text-center text-xs uppercase tracking-wide text-muted-fg">{t("lobby.shareCode")}</p>
       <button
         type="button"
+        data-testid="room-code"
         onClick={() => copy(state.roomId, "code")}
         title={t("lobby.copyCode")}
         className="mx-auto mb-3 block font-display text-5xl font-bold tracking-[0.3em] text-gold-soft transition hover:brightness-110"
@@ -302,6 +309,7 @@ export function RoomLobby({
           return (
             <li
               key={p.seat}
+              data-testid="lobby-seat"
               className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-2"
             >
               <span className="flex items-center gap-2 text-foreground">
@@ -328,10 +336,10 @@ export function RoomLobby({
 
       {isHost ? (
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={onAddBot} disabled={full}>
+          <Button data-testid="add-bot" variant="ghost" className="flex-1" onClick={onAddBot} disabled={full}>
             {t("lobby.addBot")}
           </Button>
-          <Button variant="gold" className="flex-1" onClick={onStart} disabled={!full}>
+          <Button data-testid="start-game" variant="gold" className="flex-1" onClick={onStart} disabled={!full}>
             {t("lobby.start")}
           </Button>
         </div>
@@ -340,6 +348,7 @@ export function RoomLobby({
       )}
 
       <button
+        data-testid="leave-table"
         onClick={onLeave}
         className="mt-3 w-full rounded-lg border border-danger/40 py-2 text-sm font-semibold text-danger transition hover:bg-danger/10"
       >

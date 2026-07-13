@@ -33,8 +33,8 @@ export default function AuthBar() {
   if (auth) {
     return (
       <Panel className="mx-auto mt-6 flex w-full max-w-md items-center justify-between px-4 py-2 text-sm">
-        <span className="text-muted-fg">{t("auth.signedInAs", { name: auth.username })}</span>
-        <button onClick={logout} className="text-muted-fg underline hover:text-foreground">
+        <span data-testid="auth-user" className="text-muted-fg">{t("auth.signedInAs", { name: auth.username })}</span>
+        <button data-testid="logout" onClick={logout} className="text-muted-fg underline hover:text-foreground">
           {t("auth.logout")}
         </button>
       </Panel>
@@ -47,6 +47,7 @@ export default function AuthBar() {
         {(["login", "register"] as const).map((m) => (
           <button
             key={m}
+            data-testid={`auth-tab-${m}`}
             onClick={() => setMode(m)}
             className={mode === m ? "font-semibold text-gold-soft" : "text-muted-fg"}
           >
@@ -57,6 +58,7 @@ export default function AuthBar() {
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
+          data-testid="auth-username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder={t("auth.username")}
@@ -64,13 +66,14 @@ export default function AuthBar() {
           className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground outline-none focus:border-gold-soft"
         />
         <input
+          data-testid="auth-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           type="password"
           placeholder={t("auth.password")}
           className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground outline-none focus:border-gold-soft"
         />
-        <Button variant="gold" size="sm" onClick={submit} disabled={busy || !username || !password}>
+        <Button data-testid="auth-submit" variant="gold" size="sm" onClick={submit} disabled={busy || !username || !password}>
           {mode === "login" ? t("auth.login") : t("auth.register")}
         </Button>
       </div>

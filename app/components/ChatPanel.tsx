@@ -64,6 +64,7 @@ export default function ChatPanel({
       </div>
       <div className="flex gap-2 border-t border-border p-2">
         <input
+          data-testid="chat-input"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {

@@ -23,6 +23,9 @@ export default function Card({ card, size = "md", playable, dimmed, highlight, o
   return (
     <button
       type="button"
+      data-testid="card"
+      data-card={`${card.suit}-${card.rank}`}
+      data-playable={playable ? "true" : "false"}
       disabled={!playable || !onClick}
       onClick={onClick}
       className={cn(
