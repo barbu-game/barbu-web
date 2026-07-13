@@ -18,6 +18,14 @@ export function useGameSocket() {
   const resumeTokenRef = useRef<string | null>(null);
   // Indirection stable pour rouvrir le socket depuis un handler (redirect) sans dépendance circulaire.
   const connectRef = useRef<(onReady: () => void) => void>(() => {});
+  // Fermeture volontaire (redirect/matched) : distingue un handoff piloté par un handler d'une
+  // coupure subie, pour ne pas re-enfiler par erreur pendant un match.
+  const intentionalCloseRef = useRef(false);
+  // Dernière demande de matchmaking + garde-fous : re-enfiler UNE fois si le socket tombe en pleine
+  // recherche (pod home mort → « re-queue transparent » sur un survivant).
+  const lastEnqueueRef = useRef<{ name: string; size: number; ranked: boolean } | null>(null);
+  const searchingRef = useRef(false);
+  const requeuedRef = useRef(false);
   const [state, setState] = useState<GameState | null>(null);
   const [seat, setSeat] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -49,8 +57,23 @@ export function useGameSocket() {
       onReady();
     };
     ws.onclose = () => {
+      if (intentionalCloseRef.current) {
+        intentionalCloseRef.current = false;
+        return; // handoff piloté par le handler redirect/matched : il rouvre le socket lui-même
+      }
       setStatus("closed");
-      setSearching(false);
+      if (searchingRef.current && lastEnqueueRef.current && !requeuedRef.current) {
+        // Coupure subie pendant la recherche (pod home mort) : une seule tentative de ré-inscription
+        // sur un pod survivant, puis on abandonne si ça retombe (pas de boucle si le serveur est down).
+        requeuedRef.current = true;
+        const { name, size, ranked } = lastEnqueueRef.current;
+        urlRef.current = WS_URL;
+        setTimeout(() => {
+          connectRef.current(() => send({ type: "enqueueMatchmaking", name, size, ranked, token: tokenRef.current }));
+        }, 1000);
+      } else {
+        setSearching(false);
+      }
     };
     ws.onerror = () => {
       setError("Connection error — is the server running?");
@@ -84,12 +107,26 @@ export function useGameSocket() {
         // La partie vit sur un autre pod : on rebranche le socket dessus et on rejoue le resume.
         urlRef.current = buildPodWsUrl(WS_URL, msg.pod);
         const token = resumeTokenRef.current;
+        intentionalCloseRef.current = true;
         try {
           ws.close();
         } catch {
           // socket already closing; the fresh connect below is what matters
         }
         connectRef.current(() => send({ type: "resume", resumeToken: token, token: tokenRef.current }));
+      } else if (msg.type === "matched") {
+        // Matchmaking a formé une table sur le pod msg.pod : le serveur nous fournit le resume token du
+        // siège réservé (on n'en avait pas). On se branche sur ce pod et on réclame le siège, exactement
+        // comme un redirect de reconnexion.
+        resumeTokenRef.current = msg.resumeToken;
+        urlRef.current = buildPodWsUrl(WS_URL, msg.pod);
+        intentionalCloseRef.current = true;
+        try {
+          ws.close();
+        } catch {
+          // socket already closing; the fresh connect below is what matters
+        }
+        connectRef.current(() => send({ type: "resume", resumeToken: msg.resumeToken, token: tokenRef.current }));
       }
     };
   }, [send]);
@@ -97,6 +134,12 @@ export function useGameSocket() {
   useEffect(() => {
     connectRef.current = ensureSocket;
   }, [ensureSocket]);
+
+  // Miroir de l'état `searching` : les handlers (joined/state/error) le remettent à false via setState ;
+  // le ref permet à onclose de savoir, sans re-render, si une coupure survient en pleine recherche.
+  useEffect(() => {
+    searchingRef.current = searching;
+  }, [searching]);
 
   const setAuthToken = useCallback((token: string | null) => {
     tokenRef.current = token;
@@ -116,6 +159,9 @@ export function useGameSocket() {
 
   const quickMatch = useCallback(
     (name: string, size: number, ranked = false) => {
+      lastEnqueueRef.current = { name, size, ranked };
+      requeuedRef.current = false;
+      searchingRef.current = true;
       setSearching(true);
       ensureSocket(() => send({ type: "enqueueMatchmaking", name, size, ranked, token: tokenRef.current }));
     },
@@ -123,6 +169,8 @@ export function useGameSocket() {
   );
 
   const cancelMatch = useCallback(() => {
+    lastEnqueueRef.current = null;
+    searchingRef.current = false;
     send({ type: "cancelMatchmaking" });
     setSearching(false);
   }, [send]);
