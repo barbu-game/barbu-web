@@ -120,18 +120,23 @@ export function useGameSocket() {
         }
         connectRef.current(() => send({ type: "resume", resumeToken: token, token: tokenRef.current }));
       } else if (msg.type === "matched") {
-        // Matchmaking a formé une table sur le pod msg.pod : le serveur nous fournit le resume token du
-        // siège réservé (on n'en avait pas). On se branche sur ce pod et on réclame le siège, exactement
-        // comme un redirect de reconnexion.
+        // Matchmaking a formé une table : le serveur fournit le resume token du siège réservé (on n'en
+        // avait pas). On ne se rebranche via /pod/<pod> (routé par Traefik) que si la table vit sur un
+        // AUTRE pod. Sinon (pas de `pod`, ou le sentinel mono-instance "local" = POD_ID par défaut) on
+        // réclame le siège sur le socket courant : hors cluster /pod/<pod> n'est routé nulle part.
         resumeTokenRef.current = msg.resumeToken;
-        urlRef.current = buildPodWsUrl(WS_URL, msg.pod);
-        intentionalCloseRef.current = true;
-        try {
-          ws.close();
-        } catch {
-          // socket already closing; the fresh connect below is what matters
+        if (msg.pod && msg.pod !== "local") {
+          urlRef.current = buildPodWsUrl(WS_URL, msg.pod);
+          intentionalCloseRef.current = true;
+          try {
+            ws.close();
+          } catch {
+            // socket already closing; the fresh connect below is what matters
+          }
+          connectRef.current(() => send({ type: "resume", resumeToken: msg.resumeToken, token: tokenRef.current }));
+        } else {
+          send({ type: "resume", resumeToken: msg.resumeToken, token: tokenRef.current });
         }
-        connectRef.current(() => send({ type: "resume", resumeToken: msg.resumeToken, token: tokenRef.current }));
       }
     };
   }, [send]);
