@@ -15,6 +15,10 @@ import { cardsOnTable } from "./lib/game";
 import { useGameSocket } from "./lib/useGameSocket";
 import { saveSession, loadSession, clearSession } from "./lib/session";
 import { installReconnect } from "./lib/reconnect";
+import { createRetryScheduler, type RetryScheduler } from "./lib/retryLoop";
+import { nextBackoffDelay } from "./lib/backoff";
+import { deriveConnectionPhase } from "./lib/connectionPhase";
+import ConnectionToast from "./components/ConnectionToast";
 import { fetchVariants, type Variant } from "./lib/variants";
 
 export default function Page({ searchParams }: { searchParams: Promise<{ join?: string }> }) {
@@ -72,6 +76,37 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
       }),
     [status, resume],
   );
+
+  // Reconnexion active : tant que l'onglet reste ouvert et qu'une session de jeu est stockée,
+  // on rejoue `resume` avec un backoff jitteré à chaque fois que le socket tombe. Complète
+  // installReconnect (qui, lui, ne réagit qu'au retour de visibilité / réseau). resume et status
+  // sont lus via des refs pour garder le scheduler stable sur toute la vie du composant.
+  const resumeRef = useRef(resume);
+  const statusRef = useRef(status);
+  useEffect(() => {
+    resumeRef.current = resume;
+    statusRef.current = status;
+  });
+  const retryRef = useRef<RetryScheduler | null>(null);
+  useEffect(() => {
+    const scheduler = createRetryScheduler({
+      loadSession,
+      resume: (token) => resumeRef.current(token),
+      isSocketOpen: () => statusRef.current === "open",
+      delayFor: nextBackoffDelay,
+    });
+    retryRef.current = scheduler;
+    return () => {
+      scheduler.stop();
+      retryRef.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    const scheduler = retryRef.current;
+    if (!scheduler) return;
+    if (status === "closed") scheduler.onClosed();
+    else if (status === "open") scheduler.onOpen();
+  }, [status]);
 
   // Persiste la session tant qu'on tient un siège vivant ; purge en fin de partie.
   useEffect(() => {
@@ -144,6 +179,13 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
         <AudioControls />
       </div>
       {content}
+      <ConnectionToast
+        phase={deriveConnectionPhase({
+          isOpen: game.status === "open",
+          hasSession: game.state !== null && game.state.phase !== "GAME_OVER",
+          resumeUnavailable: game.resumeUnavailable,
+        })}
+      />
       {game.roomId && (
         <div className="mx-auto mt-6 w-full max-w-5xl">
           <ChatPanel

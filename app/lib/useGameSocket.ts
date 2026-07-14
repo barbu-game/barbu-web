@@ -91,12 +91,17 @@ export function useGameSocket() {
         setSeat(msg.seat);
         setRoomId(msg.roomId);
         setSearching(false);
+        setResumeUnavailable(false);
       } else if (msg.type === "error") {
         setError(msg.message);
         setSearching(false);
       } else if (msg.type === "state") {
         setState(msg as GameState);
         setSearching(false);
+        // Un état frais prouve qu'on est dans une session vivante : purge un éventuel
+        // resumeUnavailable resté armé d'une reprise antérieure (sinon le toast de connexion
+        // afficherait « échec » sur une partie parfaitement saine).
+        setResumeUnavailable(false);
       } else if (msg.type === "chat") {
         setMessages((prev) => [...prev, msg as ChatBroadcast]);
       } else if (msg.type === "rankedResult") {

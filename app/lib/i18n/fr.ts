@@ -99,4 +99,7 @@ export const fr = {
   "contract.MONTANTE": "La Montante",
   "table.thisRound": "cette manche",
   "table.total": "total",
+  "conn.reconnecting": "Connexion perdue — reconnexion…",
+  "conn.reconnected": "Reconnecté ✓",
+  "conn.failed": "Connexion perdue. Rechargez la page.",
 } as const;

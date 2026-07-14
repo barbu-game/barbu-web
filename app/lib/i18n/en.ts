@@ -101,4 +101,7 @@ export const en: Record<keyof typeof fr, string> = {
   "contract.MONTANTE": "Montante",
   "table.thisRound": "this round",
   "table.total": "total",
+  "conn.reconnecting": "Connection lost — reconnecting…",
+  "conn.reconnected": "Reconnected ✓",
+  "conn.failed": "Connection lost. Please reload the page.",
 };
