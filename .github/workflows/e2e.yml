@@ -58,6 +58,8 @@ jobs:
       - name: Run E2E
         working-directory: barbu-web
         run: pnpm test:e2e
+        env:
+          JWT_SECRET: e2e-only-throwaway-secret-not-used-in-prod
 
       - name: Upload report
         if: ${{ !cancelled() }}
