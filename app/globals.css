@@ -17,7 +17,9 @@
 }
 
 body {
-  background: radial-gradient(ellipse at top, #12303a 0%, var(--color-background) 55%);
+  background-color: var(--color-background);
+  background-image: radial-gradient(ellipse at top, #12303a 0%, var(--color-background) 55%);
+  background-repeat: no-repeat;
   color: var(--color-foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   min-height: 100dvh;
