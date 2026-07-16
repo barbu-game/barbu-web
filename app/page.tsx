@@ -11,6 +11,7 @@ import Leaderboard from "./components/Leaderboard";
 import { Home, RoomLobby, Searching } from "./components/Lobby";
 import { audio } from "./lib/audio";
 import { useAuth } from "./lib/auth";
+import { useLocale } from "./lib/i18n";
 import { cardsOnTable } from "./lib/game";
 import { useGameSocket } from "./lib/useGameSocket";
 import { saveSession, loadSession, clearSession } from "./lib/session";
@@ -25,13 +26,16 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
   const { join } = use(searchParams);
   const game = useGameSocket();
   const auth = useAuth();
+  const { locale } = useLocale();
   const [variants, setVariants] = useState<Variant[]>([]);
 
+  // Re-fetch when the locale changes: the rule text is localised server-side, so the toggle
+  // must reload /variants to update the rules card.
   useEffect(() => {
-    fetchVariants()
+    fetchVariants(locale)
       .then(setVariants)
       .catch(() => setVariants([]));
-  }, []);
+  }, [locale]);
 
   const cardCount = cardsOnTable(game.state);
   const previousCardCount = useRef(0);

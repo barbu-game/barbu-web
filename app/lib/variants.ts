@@ -7,8 +7,11 @@ export type { Variant, VariantContract };
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
-export async function fetchVariants(): Promise<Variant[]> {
-  const res = await fetch(`${API}/variants`);
+// The rule text is localised server-side from Accept-Language, so pass the UI locale through.
+export async function fetchVariants(locale?: string): Promise<Variant[]> {
+  const res = await fetch(`${API}/variants`, {
+    headers: locale ? { "Accept-Language": locale } : undefined,
+  });
   if (!res.ok) throw new Error(`Failed to load variants (${res.status})`);
   return res.json();
 }
