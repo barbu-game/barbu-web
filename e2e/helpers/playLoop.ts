@@ -11,9 +11,9 @@ function visible(page: Page, selector: string): Promise<boolean> {
 }
 
 /**
- * Joue un coup du siège humain si c'est possible et renvoie true ; sinon renvoie false.
- * On attend que la carte jouée quitte la main (ou, pour une passe, un court instant) afin
- * de ne pas re-cliquer une carte périmée avant que le serveur ait pris le coup en compte.
+ * Plays one move for the human seat, returning whether it played. Waits for the card to leave
+ * the hand (or a brief moment for a pass) to avoid re-clicking a stale card before the server
+ * registers the move.
  */
 async function playOneMove(page: Page): Promise<boolean> {
   const first = page.locator(PLAYABLE).first();
@@ -37,10 +37,8 @@ async function playOneMove(page: Page): Promise<boolean> {
 }
 
 /**
- * Joue le siège humain jusqu'à l'écran de classement final. Les bots étant à délai 0, une
- * partie complète tient en ~2 min via l'UI. On vote « continuer » aux frontières de donneur
- * (un vote d'arrêt s'y ouvre automatiquement) pour dérouler la partie jusqu'à sa fin.
- * On ne s'appuie sur aucune valeur de carte.
+ * Plays the human seat through to the final standings screen, voting "continue" at dealer
+ * boundaries (where a stop vote opens automatically). Does not rely on any card value.
  */
 export async function playUntilEnd(page: Page, timeoutMs = 200_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
@@ -54,12 +52,12 @@ export async function playUntilEnd(page: Page, timeoutMs = 200_000): Promise<voi
     if (await playOneMove(page)) continue;
     await page.waitForTimeout(100);
   }
-  throw new Error("la partie ne s'est pas terminée dans le délai imparti");
+  throw new Error("the game did not finish within the allotted time");
 }
 
 /**
- * Comme playUntilEnd, mais s'arrête aussi dès qu'un vote d'arrêt s'ouvre (frontière de
- * donneur). Renvoie "stopVote" si le panneau est apparu, "gameOver" si la partie a fini.
+ * Like playUntilEnd, but also stops as soon as a stop vote opens (dealer
+ * boundary). Returns "stopVote" if the panel appeared, "gameOver" if the game ended.
  */
 export async function playUntilStopVoteOrEnd(
   page: Page,
@@ -72,5 +70,5 @@ export async function playUntilStopVoteOrEnd(
     if (await playOneMove(page)) continue;
     await page.waitForTimeout(100);
   }
-  throw new Error("ni vote d'arrêt ni fin de partie dans le délai imparti");
+  throw new Error("neither a stop vote nor game end within the allotted time");
 }

@@ -14,19 +14,19 @@ pnpm install
 The scope is mapped to the registry in `.npmrc`; CI passes the token as
 `NODE_AUTH_TOKEN`.
 
-## Tests E2E (Playwright)
+## E2E tests (Playwright)
 
-Prérequis local : `JAVA_HOME` sur un JDK 21 (Temurin). Depuis `barbu-web/` :
+Local prerequisite: `JAVA_HOME` pointing at a JDK 21 (Temurin). From `barbu-web/`:
 
 ```bash
-pnpm test:e2e        # démarre le backend (../barbu-server) + le front + Playwright
-pnpm test:e2e:ui     # mode interactif
+pnpm test:e2e        # starts the backend (../barbu-server) + the frontend + Playwright
+pnpm test:e2e:ui     # interactive mode
 ```
 
-Playwright démarre lui-même le serveur (bots à délai 0, `BARBU_BOT_DELAY_MS=0`) et le
-front ; s'ils tournent déjà (`pnpm dev` + serveur), ils sont réutilisés. En CI, le
-workflow `E2E` checkout `barbu-server` (secret `SERVER_REPO_TOKEN`, lecture `contents`)
-et exécute la suite en gate avant merge.
+Playwright starts the server itself (bots with zero delay, `BARBU_BOT_DELAY_MS=0`) and
+the frontend; if they are already running (`pnpm dev` + server), they are reused. In CI,
+the `E2E` workflow checks out `barbu-server` (secret `SERVER_REPO_TOKEN`, `contents` read
+access) and runs the suite as a gate before merge.
 
 ## Getting Started
 

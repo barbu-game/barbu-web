@@ -16,7 +16,7 @@ export async function register(
   return res.json();
 }
 
-/** Injecte la session (réponse de register/login) telle quelle sous la clé du front. */
+/** Injects the session (register/login response) as-is under the frontend's key. */
 export async function seedAuth(context: BrowserContext, auth: Record<string, unknown>) {
   await context.addInitScript(
     ([key, value]) => window.localStorage.setItem(key as string, value as string),

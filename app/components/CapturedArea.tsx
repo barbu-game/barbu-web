@@ -4,8 +4,8 @@ import { isRedSuit, rankLabel, SUIT_SYMBOL, type CardT } from "../lib/game";
 import { resolveCapture } from "../lib/captured";
 import Card from "../ui/Card";
 
-// A real pile: the top card sits face-up (rank + suit) and the ones underneath only
-// peek out as colored slivers, so the colors show without making the count easy to read.
+// Top card face-up; the rest peek out as colored slivers so suit colors show without making the
+// count easy to read.
 function CapturedPile({ cards }: { cards: CardT[] }) {
   return (
     <div className="flex">

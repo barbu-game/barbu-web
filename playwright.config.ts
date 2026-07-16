@@ -4,7 +4,7 @@ const CI = !!process.env.CI;
 
 export default defineConfig({
   testDir: "./e2e/specs",
-  fullyParallel: false, // un seul backend partagé : on garde l'exécution en série
+  fullyParallel: false, // single shared backend: keep execution serial
   workers: 1,
   forbidOnly: CI,
   retries: CI ? 1 : 0,
@@ -19,9 +19,8 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      // Serveur autoritaire réel : bots instantanés, H2 en mémoire (reset à chaque run).
-      // Le moteur cible Java 21 ; en local le JDK par défaut peut différer, alors on résout
-      // un JAVA_HOME 21 via /usr/libexec/java_home s'il n'est pas déjà fourni par l'environnement.
+      // Real authoritative server: instant bots, in-memory H2 (reset on each run).
+      // The engine needs Java 21; resolve a JAVA_HOME 21 unless the environment already provides one.
       command:
         "cd ../barbu-server && " +
         'JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 21 2>/dev/null || echo "$JAVA_HOME")}" ' +
@@ -34,9 +33,8 @@ export default defineConfig({
       stderr: "pipe",
     },
     {
-      // Le repo est configuré en `output: standalone`, avec lequel `next start` n'est pas
-      // supporté ; `next dev` sert la même app réelle contre le vrai backend/WS et démarre
-      // plus vite. Le typecheck/drift du build de prod reste couvert par la CI (`pnpm build`).
+      // `output: standalone` doesn't support `next start`; `next dev` serves the same app against
+      // the real backend/WS and starts faster. Prod typecheck/drift stays covered by CI.
       command: "pnpm dev",
       url: "http://localhost:3000",
       timeout: 180_000,

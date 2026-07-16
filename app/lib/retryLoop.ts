@@ -15,9 +15,9 @@ export type RetrySchedulerDeps = {
   clearTimer?: (id: number) => void;
 };
 
-// Reconnexion active tant que l'onglet est ouvert : sur socket fermé avec une session stockée,
-// on rejoue `resume` après un délai croissant (backoff + jitter, cf. delayFor). Retry infini —
-// jamais d'abandon ; on ne s'arrête que sans session ou quand le socket revient (onOpen).
+// Active reconnection while the tab is open: on a closed socket with a stored session, replay
+// resume after a growing delay (backoff + jitter). Infinite retry; stop only when the session
+// is gone or the socket reopens.
 export function createRetryScheduler(deps: RetrySchedulerDeps): RetryScheduler {
   const setTimer = deps.setTimer ?? ((cb, ms) => setTimeout(cb, ms) as unknown as number);
   const clearTimer = deps.clearTimer ?? ((id) => clearTimeout(id));
@@ -45,7 +45,7 @@ export function createRetryScheduler(deps: RetrySchedulerDeps): RetryScheduler {
       cancel();
       return;
     }
-    if (timer !== null) return; // une tentative est déjà armée pour cette coupure
+    if (timer !== null) return; // an attempt is already armed for this drop
     const delay = deps.delayFor(attempt);
     attempt += 1;
     timer = setTimer(fire, delay);

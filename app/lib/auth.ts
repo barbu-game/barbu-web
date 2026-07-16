@@ -25,10 +25,9 @@ async function post(path: string, body: AuthControllerCredentials): Promise<Auth
 export const login = (credentials: AuthControllerCredentials) => post("/auth/login", credentials);
 export const register = (credentials: AuthControllerCredentials) => post("/auth/register", credentials);
 
-// Session persistence: the auth result is mirrored into localStorage so a page refresh
-// keeps the user signed in. Exposed as a useSyncExternalStore-backed hook — this reads
-// storage without a hydration mismatch (server snapshot is null) and stays in sync across
-// tabs via the `storage` event.
+// Mirror the auth result into localStorage so a refresh keeps the user signed in. The
+// useSyncExternalStore hook reads it without a hydration mismatch (server snapshot is null) and
+// stays in sync across tabs via the `storage` event.
 const STORAGE_KEY = "barbu.auth";
 const listeners = new Set<() => void>();
 
@@ -38,7 +37,7 @@ let parsedFrom: string | null = null;
 function getSnapshot(): AuthResult | null {
   if (typeof window === "undefined") return null;
   const raw = window.localStorage.getItem(STORAGE_KEY);
-  // Re-parse only when the stored string changed, so getSnapshot returns a stable reference.
+  // Re-parse only when the stored string changed, to return a stable reference.
   if (raw === parsedFrom) return snapshot;
   parsedFrom = raw;
   if (!raw) return (snapshot = null);

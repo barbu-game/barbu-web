@@ -1,7 +1,6 @@
-// Délai avant la prochaine tentative de reconnexion. Full jitter (delai aléatoire dans une
-// fenêtre qui croît exponentiellement) pour éviter le thundering herd : quand un pod redémarre,
-// tous les clients se sont déconnectés au même instant ; un délai déterministe les ferait
-// retenter en même temps et re-saturer le serveur. Le plancher évite de marteler instantanément.
+// Delay before the next reconnection attempt. Full jitter (random delay within an exponentially
+// growing window) avoids a thundering herd: a pod restart disconnects every client at once, so a
+// deterministic delay would re-saturate the server in lockstep. The floor avoids hammering instantly.
 const FLOOR_MS = 500;
 const BASE_MS = 1000;
 const CAP_MS = 15000;

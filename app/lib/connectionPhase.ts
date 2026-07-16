@@ -1,16 +1,16 @@
 export type ConnectionPhase = "connected" | "reconnecting" | "failed";
 
-// Phase « stable » qui pilote le toast de connexion. Le retry ne s'épuisant jamais tant que
-// l'onglet est ouvert, on ne bascule en `failed` que quand le serveur refuse explicitement la
-// reprise (`resumeUnavailable` : partie finie / siège pris) — sinon on reste en `reconnecting`.
+// "Stable" phase that drives the connection toast. Retry never gives up while the tab is open, so
+// we only switch to `failed` when the server explicitly refuses the resume (`resumeUnavailable`:
+// game over / seat taken).
 export function deriveConnectionPhase(input: {
   isOpen: boolean;
   hasSession: boolean;
   resumeUnavailable: boolean;
 }): ConnectionPhase {
   if (!input.hasSession) return "connected";
-  // Un socket ouvert prime : `resumeUnavailable` reste armé après une reprise refusée, or une
-  // session ouverte après coup (nouvelle table) est bel et bien connectée.
+  // An open socket wins: `resumeUnavailable` stays armed after a refused resume, yet a session
+  // opened afterwards (new table) is genuinely connected.
   if (input.isOpen) return "connected";
   if (input.resumeUnavailable) return "failed";
   return "reconnecting";

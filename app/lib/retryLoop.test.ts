@@ -4,7 +4,7 @@ import type { StoredSession } from "./session";
 
 const SESSION: StoredSession = { roomId: "4URC3", seat: 0, resumeToken: "tok-123" };
 
-// Faux ordonnanceur de timers : capture les callbacks pour les déclencher à la main.
+// Fake timer scheduler: captures the callbacks to fire them by hand.
 function fakeTimers() {
   const pending = new Map<number, () => void>();
   let next = 1;
@@ -27,7 +27,7 @@ function fakeTimers() {
 function setup(overrides: Partial<RetrySchedulerDeps> = {}) {
   const timers = fakeTimers();
   const resume = vi.fn();
-  const delayFor = vi.fn((attempt: number) => attempt); // délai = numéro de tentative
+  const delayFor = vi.fn((attempt: number) => attempt); // delay = attempt number
   const deps: RetrySchedulerDeps = {
     loadSession: () => SESSION,
     resume,

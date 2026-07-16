@@ -4,8 +4,8 @@ import type {
   GameStateMessageMoveView,
 } from "@barbu-game/barbu-api";
 
-// Source unique du contrat (getout) : ces types sont générés depuis l'OpenAPI du serveur,
-// donc tout drift de la forme du message `state` casse le typecheck ici plutôt qu'à l'exécution.
+// Single source of the contract (getout): these types are generated from the server's OpenAPI,
+// so any drift in the shape of the `state` message breaks the typecheck here rather than at runtime.
 export type GameState = GameStateMessage;
 export type CardT = GameStateMessageCardView;
 export type MoveT = GameStateMessageMoveView;

@@ -7,8 +7,8 @@ export class GameTablePage {
     await expect(el).toBeVisible();
     return (await el.innerText()).trim();
   }
-  // GameTable rend son centre deux fois (bloc mobile `sm:hidden` + bloc desktop `hidden sm:block`) :
-  // on cible l'instance réellement visible pour ne pas compter les doublons cachés.
+  // GameTable renders its center twice (mobile block `sm:hidden` + desktop block `hidden sm:block`):
+  // we target the actually visible instance so we don't count the hidden duplicates.
   private standings() {
     return this.page.locator('[data-testid="final-standings"]:visible');
   }

@@ -1,9 +1,8 @@
 import type { StoredSession } from "./session";
 
-// Reprise de session quand l'onglet revient au premier plan ou que le réseau réapparaît.
-// Sur mobile, quitter l'onglet (p. ex. pour partager le lien d'invitation) suspend la page et
-// ferme le WebSocket. Si l'onglet n'est pas rechargé au retour, la reprise au montage ne rejoue
-// jamais : on écoute donc visibilitychange/online pour relancer un `resume` sur socket mort.
+// Fire a resume on a dead socket when the tab regains foreground or the network returns.
+// Mobile backgrounding suspends the page and closes the WebSocket without reloading, so the
+// mount-time resume never replays.
 
 export type ReconnectDeps = {
   isVisible: () => boolean;

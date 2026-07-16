@@ -45,8 +45,8 @@ function sortHand(hand: CardT[]): CardT[] {
   });
 }
 
-// Contract names live in game.ts (English, contract-shape source of truth). Translate them here
-// so the label follows the UI locale, falling back to the English map for any unknown key.
+// Translate the English contract names to the UI locale, falling back to the English label for
+// any unknown key.
 function contractName(t: T, key?: string | null): string {
   if (!key) return "";
   return key in CONTRACT_LABEL ? t(`contract.${key}` as TranslationKey) : (CONTRACT_LABEL[key] ?? key);

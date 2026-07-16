@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { AuthBarPage } from "../pages/AuthBar";
 import { uniqueName } from "../helpers/api";
 
-test("register connecte l'utilisateur puis logout le déconnecte", async ({ page }) => {
+test("register signs the user in, then logout signs them out", async ({ page }) => {
   const u = uniqueName("acct");
   await page.goto("/");
   const auth = new AuthBarPage(page);
@@ -12,7 +12,7 @@ test("register connecte l'utilisateur puis logout le déconnecte", async ({ page
   await expect(page.getByTestId("auth-username")).toBeVisible();
 });
 
-test("login puis reload conserve la session (localStorage)", async ({ page }) => {
+test("login then reload keeps the session (localStorage)", async ({ page }) => {
   const u = uniqueName("acct");
   await page.goto("/");
   const auth = new AuthBarPage(page);
@@ -22,7 +22,7 @@ test("login puis reload conserve la session (localStorage)", async ({ page }) =>
   await expect(page.getByTestId("auth-user")).toContainText(u);
 });
 
-test("un invité peut créer une table sans compte", async ({ page }) => {
+test("a guest can create a table without an account", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("name-input").fill("GuestOnly");
   await page.getByTestId("player-count").selectOption("2");
