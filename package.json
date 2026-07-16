@@ -12,7 +12,7 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@barbu-game/barbu-api": "^0.21.0",
+    "@barbu-game/barbu-api": "^0.1.0",
     "@radix-ui/react-dialog": "^1.1.19",
     "clsx": "^2.1.1",
     "framer-motion": "^12.42.2",
