@@ -210,7 +210,7 @@ export function Searching({ onCancel }: { onCancel: () => void }) {
 function BotNameInput({ name, onCommit }: { name: string; onCommit: (n: string) => void }) {
   const [value, setValue] = useState(name);
   const focused = useRef(false);
-  // Resynchronise sur le nom serveur seulement hors édition, pour ne pas écraser la frappe.
+  // Resync to the server name only while not editing, so we don't overwrite typing.
   useEffect(() => {
     if (!focused.current) setValue(name);
   }, [name]);

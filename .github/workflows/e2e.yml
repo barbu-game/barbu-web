@@ -17,7 +17,7 @@ jobs:
         with:
           path: barbu-web
 
-      # Le serveur, frère sur le disque pour que ../barbu-server résolve.
+      # The server, a sibling on disk so that ../barbu-server resolves.
       - name: Checkout server
         uses: actions/checkout@v6
         with:
@@ -40,7 +40,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: barbu-web/pnpm-lock.yaml
 
-      # @barbu-game/barbu-api est public : le GITHUB_TOKEN suffit à le lire.
+      # @barbu-game/barbu-api is public: the GITHUB_TOKEN is enough to read it.
       - name: Auth to GitHub Packages
         working-directory: barbu-web
         run: pnpm config set "//npm.pkg.github.com/:_authToken" "$NODE_AUTH_TOKEN"

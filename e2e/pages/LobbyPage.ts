@@ -16,7 +16,7 @@ export class LobbyPage {
   async addBotUntilFull() {
     const start = this.page.getByTestId("start-game");
     const addBot = this.page.getByTestId("add-bot");
-    // Le serveur active Start dès que tous les sièges sont pris ; on remplit avec des bots.
+    // The server enables Start as soon as all seats are taken; we fill with bots.
     for (let i = 0; i < 12; i++) {
       if (await start.isEnabled().catch(() => false)) return;
       await addBot.click();

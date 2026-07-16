@@ -12,17 +12,17 @@ type Status = "idle" | "connecting" | "open" | "closed";
 export function useGameSocket() {
   const wsRef = useRef<WebSocket | null>(null);
   const tokenRef = useRef<string | null>(null);
-  // URL de connexion courante (peut être réécrite vers un pod propriétaire sur redirect) et
-  // dernier resume token, rejoué à l'identique après un redirect.
+  // Current connection URL (may be rewritten to an owning pod on redirect) and last resume token,
+  // replayed identically after a redirect.
   const urlRef = useRef<string>(WS_URL);
   const resumeTokenRef = useRef<string | null>(null);
-  // Indirection stable pour rouvrir le socket depuis un handler (redirect) sans dépendance circulaire.
+  // Stable indirection to reopen the socket from a handler (redirect) without a circular dependency.
   const connectRef = useRef<(onReady: () => void) => void>(() => {});
-  // Fermeture volontaire (redirect/matched) : distingue un handoff piloté par un handler d'une
-  // coupure subie, pour ne pas re-enfiler par erreur pendant un match.
+  // Intentional close (redirect/matched): distinguishes a handler-driven handoff from an unwanted
+  // drop, so we don't re-enqueue by mistake during a match.
   const intentionalCloseRef = useRef(false);
-  // Dernière demande de matchmaking + garde-fous : re-enfiler UNE fois si le socket tombe en pleine
-  // recherche (pod home mort → « re-queue transparent » sur un survivant).
+  // Last matchmaking request + guards: re-enqueue ONCE if the socket drops mid-search (home pod
+  // dead → "transparent re-queue" onto a survivor).
   const lastEnqueueRef = useRef<{ name: string; size: number; ranked: boolean } | null>(null);
   const searchingRef = useRef(false);
   const requeuedRef = useRef(false);
@@ -34,8 +34,8 @@ export function useGameSocket() {
   const [messages, setMessages] = useState<ChatBroadcast[]>([]);
   const [rankedResults, setRankedResults] = useState<RankedMessagesRankedResultEntry[] | null>(null);
   const [resumeUnavailable, setResumeUnavailable] = useState(false);
-  // En file de matchmaking : le serveur n'acquitte pas, on garde l'état localement jusqu'à ce
-  // qu'une partie arrive (message "state"), qu'une erreur tombe, ou que le joueur annule.
+  // In the matchmaking queue: the server doesn't acknowledge, we keep the state locally until a
+  // game arrives (message "state"), an error occurs, or the player cancels.
   const [searching, setSearching] = useState(false);
 
   const send = useCallback((payload: unknown) => {
@@ -59,12 +59,12 @@ export function useGameSocket() {
     ws.onclose = () => {
       if (intentionalCloseRef.current) {
         intentionalCloseRef.current = false;
-        return; // handoff piloté par le handler redirect/matched : il rouvre le socket lui-même
+        return; // handoff driven by the redirect/matched handler: it reopens the socket itself
       }
       setStatus("closed");
       if (searchingRef.current && lastEnqueueRef.current && !requeuedRef.current) {
-        // Coupure subie pendant la recherche (pod home mort) : une seule tentative de ré-inscription
-        // sur un pod survivant, puis on abandonne si ça retombe (pas de boucle si le serveur est down).
+        // Unwanted drop during the search (home pod dead): a single re-registration attempt onto a
+        // surviving pod, then we give up if it drops again (no loop if the server is down).
         requeuedRef.current = true;
         const { name, size, ranked } = lastEnqueueRef.current;
         urlRef.current = WS_URL;
@@ -98,9 +98,9 @@ export function useGameSocket() {
       } else if (msg.type === "state") {
         setState(msg as GameState);
         setSearching(false);
-        // Un état frais prouve qu'on est dans une session vivante : purge un éventuel
-        // resumeUnavailable resté armé d'une reprise antérieure (sinon le toast de connexion
-        // afficherait « échec » sur une partie parfaitement saine).
+        // A fresh state proves we're in a live session: purge any resumeUnavailable left armed from
+        // an earlier resume (otherwise the connection toast would show "failed" on a perfectly
+        // healthy game).
         setResumeUnavailable(false);
       } else if (msg.type === "chat") {
         setMessages((prev) => [...prev, msg as ChatBroadcast]);
@@ -109,7 +109,7 @@ export function useGameSocket() {
       } else if (msg.type === "resumeUnavailable") {
         setResumeUnavailable(true);
       } else if (msg.type === "redirect") {
-        // La partie vit sur un autre pod : on rebranche le socket dessus et on rejoue le resume.
+        // The game lives on another pod: we reconnect the socket to it and replay the resume.
         urlRef.current = buildPodWsUrl(WS_URL, msg.pod);
         const token = resumeTokenRef.current;
         intentionalCloseRef.current = true;
@@ -120,10 +120,10 @@ export function useGameSocket() {
         }
         connectRef.current(() => send({ type: "resume", resumeToken: token, token: tokenRef.current }));
       } else if (msg.type === "matched") {
-        // Matchmaking a formé une table : le serveur fournit le resume token du siège réservé (on n'en
-        // avait pas). On ne se rebranche via /pod/<pod> (routé par Traefik) que si la table vit sur un
-        // AUTRE pod. Sinon (pas de `pod`, ou le sentinel mono-instance "local" = POD_ID par défaut) on
-        // réclame le siège sur le socket courant : hors cluster /pod/<pod> n'est routé nulle part.
+        // Matchmaking formed a table: the server provides the resume token of the reserved seat (we
+        // had none). We only reconnect via /pod/<pod> (routed by Traefik) if the table lives on
+        // ANOTHER pod. Otherwise (no `pod`, or the single-instance sentinel "local" = default POD_ID)
+        // we claim the seat on the current socket: off-cluster, /pod/<pod> is routed nowhere.
         resumeTokenRef.current = msg.resumeToken;
         if (msg.pod && msg.pod !== "local") {
           urlRef.current = buildPodWsUrl(WS_URL, msg.pod);
@@ -145,8 +145,8 @@ export function useGameSocket() {
     connectRef.current = ensureSocket;
   }, [ensureSocket]);
 
-  // Miroir de l'état `searching` : les handlers (joined/state/error) le remettent à false via setState ;
-  // le ref permet à onclose de savoir, sans re-render, si une coupure survient en pleine recherche.
+  // Mirror of the `searching` state: the handlers (joined/state/error) reset it to false via
+  // setState; the ref lets onclose know, without a re-render, whether a drop happens mid-search.
   useEffect(() => {
     searchingRef.current = searching;
   }, [searching]);

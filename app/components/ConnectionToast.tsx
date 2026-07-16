@@ -11,9 +11,9 @@ const STYLES: Record<"reconnecting" | "reconnected" | "failed", string> = {
   failed: "bg-red-600/95 text-red-50",
 };
 
-// Toast d'état de connexion en bas-centre. `phase` est la phase stable (connected/reconnecting/
-// failed) ; le succès bref « Reconnecté ✓ » est un état local, déclenché quand on repasse de
-// reconnecting à connected — sinon la reprise serait invisible.
+// Connection-status toast at bottom-center. `phase` is the stable phase (connected/reconnecting/
+// failed); the brief "Reconnected ✓" success is a local state, triggered when we move back from
+// reconnecting to connected — otherwise the recovery would be invisible.
 export default function ConnectionToast({ phase }: { phase: ConnectionPhase }) {
   const t = useT();
   const [justReconnected, setJustReconnected] = useState(false);

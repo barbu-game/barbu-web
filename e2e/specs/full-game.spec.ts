@@ -4,9 +4,9 @@ import { LobbyPage } from "../pages/LobbyPage";
 import { GameTablePage } from "../pages/GameTablePage";
 import { playUntilEnd } from "../helpers/playLoop";
 
-// Une partie complète = ~260 coups humains joués via l'UI (constant quel que soit N :
-// cartes_par_main × manches ≈ 52/N × 5N). On laisse le temps à ce smoke de fond.
-test("partie complète 2 joueurs vs bot → classement final", async ({ page }) => {
+// A full game = ~260 human moves played via the UI (constant regardless of N:
+// cards_per_hand × rounds ≈ 52/N × 5N). We give this background smoke test time.
+test("full game, 2 players vs bot → final standings", async ({ page }) => {
   test.setTimeout(240_000);
   const home = new HomePage(page);
   await home.goto();

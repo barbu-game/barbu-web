@@ -3,7 +3,7 @@ import { HomePage } from "../pages/HomePage";
 import { LobbyPage } from "../pages/LobbyPage";
 import { register, seedAuth, uniqueName } from "../helpers/api";
 
-test("un second joueur rejoint la table par code", async ({ twoClients }) => {
+test("a second player joins the table by code", async ({ twoClients }) => {
   const { a, b } = twoClients;
   const homeA = new HomePage(a);
   await homeA.goto();
@@ -24,7 +24,7 @@ test("un second joueur rejoint la table par code", async ({ twoClients }) => {
   await expect.poll(async () => lobbyA.seatCount()).toBeGreaterThanOrEqual(3);
 });
 
-test("quick match apparie deux joueurs dans la même room", async ({ twoClients }) => {
+test("quick match pairs two players into the same room", async ({ twoClients }) => {
   const { a, b } = twoClients;
   for (const [p, name] of [
     [a, "Q1"],
@@ -36,14 +36,14 @@ test("quick match apparie deux joueurs dans la même room", async ({ twoClients 
     await home.setPlayerCount(2);
     await home.quickMatch();
   }
-  // À 2 joueurs la room se remplit d'humains ; les deux quittent la Home vers un code partagé.
+  // With 2 players the room fills with humans; both leave the Home for a shared code.
   const codeA = (await a.getByTestId("room-code").innerText()).trim();
   await expect
     .poll(async () => b.getByTestId("room-code").innerText().catch(() => ""))
     .toBe(codeA);
 });
 
-test("quand l'hôte quitte, l'autre humain devient hôte", async ({ twoClients }) => {
+test("when the host leaves, the other human becomes host", async ({ twoClients }) => {
   const { a, b } = twoClients;
   const homeA = new HomePage(a);
   await homeA.goto();
@@ -59,11 +59,11 @@ test("quand l'hôte quitte, l'autre humain devient hôte", async ({ twoClients }
   await expect(b.getByTestId("room-code")).toHaveText(code);
 
   await new LobbyPage(a).leave();
-  // B (siège humain restant le plus bas) hérite des contrôles d'hôte.
+  // B (lowest remaining human seat) inherits the host controls.
   await expect.poll(async () => new LobbyPage(b).hasHostControls()).toBe(true);
 });
 
-test("ranked match apparie deux comptes", async ({ browser, request }) => {
+test("ranked match pairs two accounts", async ({ browser, request }) => {
   const a1 = await register(request, uniqueName("rk"), "pw-123456");
   const a2 = await register(request, uniqueName("rk"), "pw-123456");
   const ctxA = await browser.newContext();
@@ -87,7 +87,7 @@ test("ranked match apparie deux comptes", async ({ browser, request }) => {
   await ctxB.close();
 });
 
-test("l'hôte ajoute un bot et voit un siège occupé", async ({ page }) => {
+test("the host adds a bot and sees an occupied seat", async ({ page }) => {
   const home = new HomePage(page);
   await home.goto();
   await home.setName("Host");

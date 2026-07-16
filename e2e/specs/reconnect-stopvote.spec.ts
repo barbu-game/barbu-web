@@ -15,16 +15,16 @@ async function startSoloGame(page: Page, players = 2) {
   await expect(page.getByTestId("room-code")).toBeVisible();
 }
 
-test("après un reload, le joueur reprend son siège et la partie continue", async ({ page }) => {
+test("after a reload, the player reclaims their seat and the game continues", async ({ page }) => {
   await startSoloGame(page);
   const code = (await page.getByTestId("room-code").innerText()).trim();
   await page.reload();
-  // La session (localStorage) relance un resume : même room, on rejoue.
+  // The session (localStorage) triggers a resume: same room, we play on.
   await expect(page.getByTestId("room-code")).toHaveText(code);
   await expect(page.getByTestId("your-hand")).toBeVisible({ timeout: 20_000 });
 });
 
-test("le reclaim tient aussi sur un viewport mobile", async ({ browser }) => {
+test("the reclaim also holds on a mobile viewport", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
   await startSoloGame(page);
@@ -34,16 +34,16 @@ test("le reclaim tient aussi sur un viewport mobile", async ({ browser }) => {
   await ctx.close();
 });
 
-test("le vote d'arrêt à la frontière de donneur termine la partie", async ({ page }) => {
+test("the stop vote at the dealer boundary ends the game", async ({ page }) => {
   test.setTimeout(120_000);
-  // Table à 10 joueurs : la 1re frontière de donneur (après 5 contrats) est atteinte en ~25 coups.
+  // 10-player table: the 1st dealer boundary (after 5 contracts) is reached in ~25 moves.
   await startSoloGame(page, 10);
   const outcome = await playUntilStopVoteOrEnd(page, 90_000);
   if (outcome === "gameOver") {
     await expect(page.locator('[data-testid="final-standings"]:visible')).toBeVisible();
     return;
   }
-  // 1 seul humain → la majorité (1×2 > 1) suffit : « Stop ici » clôt la partie.
+  // Only 1 human → the majority (1×2 > 1) is enough: "Stop here" ends the game.
   await page.getByTestId("vote-stop-yes").click();
   await expect(page.locator('[data-testid="final-standings"]:visible')).toBeVisible({ timeout: 30_000 });
 });

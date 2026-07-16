@@ -53,22 +53,22 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
     setAuthToken(auth?.token ?? null);
   }, [auth, setAuthToken]);
 
-  // Tente de reprendre la partie en cours au chargement (le token de login est déjà synchronisé
-  // par l'effet ci-dessus ; le compte se ré-authentifie, l'invité présente son resume token).
+  // Try to resume the game in progress on load (the login token is already synced by the effect
+  // above; the account re-authenticates, the guest presents their resume token).
   const resumeTried = useRef(false);
   useEffect(() => {
     if (resumeTried.current) return;
     resumeTried.current = true;
     const stored = loadSession();
     if (stored) game.resume(stored.resumeToken);
-    // au montage uniquement
+    // on mount only
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Reprise au retour de l'app : sur mobile, quitter l'onglet (p. ex. pour partager le lien
-  // d'invitation) suspend la page et tue le WebSocket sans recharger. L'effet de montage ci-dessus
-  // ne rejouant pas, on relance un `resume` dès que l'onglet redevient visible ou que le réseau
-  // revient, tant que le socket est mort et qu'une session est stockée.
+  // Resume when returning to the app: on mobile, leaving the tab (e.g. to share the invite link)
+  // suspends the page and kills the WebSocket without reloading. Since the mount effect above does
+  // not replay, we fire a `resume` as soon as the tab becomes visible again or the network comes
+  // back, as long as the socket is dead and a session is stored.
   const { resume, status } = game;
   useEffect(
     () =>
@@ -81,10 +81,10 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
     [status, resume],
   );
 
-  // Reconnexion active : tant que l'onglet reste ouvert et qu'une session de jeu est stockée,
-  // on rejoue `resume` avec un backoff jitteré à chaque fois que le socket tombe. Complète
-  // installReconnect (qui, lui, ne réagit qu'au retour de visibilité / réseau). resume et status
-  // sont lus via des refs pour garder le scheduler stable sur toute la vie du composant.
+  // Active reconnection: as long as the tab stays open and a game session is stored, we replay
+  // `resume` with a jittered backoff every time the socket drops. Complements installReconnect
+  // (which only reacts to visibility / network returning). resume and status are read via refs to
+  // keep the scheduler stable across the component's whole lifetime.
   const resumeRef = useRef(resume);
   const statusRef = useRef(status);
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
     else if (status === "open") scheduler.onOpen();
   }, [status]);
 
-  // Persiste la session tant qu'on tient un siège vivant ; purge en fin de partie.
+  // Persist the session as long as we hold a live seat; purge at end of game.
   useEffect(() => {
     const s = game.state;
     if (s && s.resumeToken && s.roomId && s.yourSeat !== undefined && s.yourSeat !== null) {
@@ -121,7 +121,7 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
     if (s && s.phase === "GAME_OVER") clearSession();
   }, [game.state]);
 
-  // Session périmée (room GC'd, siège déjà repris…) → on purge.
+  // Stale session (room GC'd, seat already reclaimed…) → purge it.
   useEffect(() => {
     if (game.resumeUnavailable) clearSession();
   }, [game.resumeUnavailable]);

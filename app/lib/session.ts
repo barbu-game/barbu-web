@@ -1,8 +1,8 @@
 "use client";
 
-// Persiste la session de jeu en cours (room + siège + resume token) pour permettre la reprise
-// après un refresh. Le token de login, lui, est déjà persisté par useAuth (lib/auth.ts) — on ne
-// duplique pas ici.
+// Persists the current game session (room + seat + resume token) to allow resuming after a
+// refresh. The login token itself is already persisted by useAuth (lib/auth.ts) — we don't
+// duplicate it here.
 
 const SESSION_KEY = "barbu.session";
 
@@ -12,7 +12,7 @@ export function saveSession(s: StoredSession) {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify(s));
   } catch {
-    // localStorage indisponible (mode privé) — la reconnexion sera simplement impossible
+    // localStorage unavailable (private mode) — reconnection will simply be impossible
   }
 }
 
