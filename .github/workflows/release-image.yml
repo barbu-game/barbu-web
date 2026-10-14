@@ -43,9 +43,6 @@ jobs:
       version: ${{ needs.version.outputs.version }}
       context: .
       dockerfile: Dockerfile
-      build-args: |
-        NEXT_PUBLIC_WS_URL=wss://api.barbu.kour0.com/ws/game
-        NEXT_PUBLIC_API_URL=https://api.barbu.kour0.com
       npm-auth: true
     secrets: inherit
 

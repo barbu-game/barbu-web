@@ -6,8 +6,8 @@ WORKDIR /app
 # whose stricter supply-chain + ignored-build defaults reject this lockfile.
 RUN npm install -g pnpm@10
 
-# NEXT_PUBLIC_* is inlined at build time, so the prod URLs must be present here.
-# WS_URL drives the game socket; API_URL drives the REST calls (/variants, /auth/*).
+# NEXT_PUBLIC_* is inlined at build time. Both are optional: left empty, REST calls are relative
+# and the game socket targets the page's own host, so the image is domain-independent.
 ARG NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 ARG NEXT_PUBLIC_API_URL

@@ -8,7 +8,7 @@ import { cn } from "../lib/cn";
 import Dialog from "../ui/Dialog";
 import IconButton from "../ui/IconButton";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export default function LeaderboardButton() {
   const t = useT();

@@ -5,7 +5,7 @@ import type { Variant, VariantContract } from "@barbu-game/barbu-api";
 // cross-origin API base in dev instead of a relative URL.
 export type { Variant, VariantContract };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 // The rule text is localised server-side from Accept-Language, so pass the UI locale through.
 export async function fetchVariants(locale?: string): Promise<Variant[]> {

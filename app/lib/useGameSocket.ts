@@ -4,16 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatBroadcast, RankedMessagesRankedResultEntry } from "@barbu-game/barbu-api";
 import type { GameState, MoveT } from "./game";
 import { buildPodWsUrl } from "./redirect";
-
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080/ws/game";
+import { gameWsUrl } from "./wsUrl";
 
 type Status = "idle" | "connecting" | "open" | "closed";
 
 export function useGameSocket() {
   const wsRef = useRef<WebSocket | null>(null);
   const tokenRef = useRef<string | null>(null);
-  // Connection URL (rewritten to the owning pod on redirect) and resume token, replayed after a redirect.
-  const urlRef = useRef<string>(WS_URL);
+  // Connection URL (rewritten to the owning pod on redirect; null = the default game socket) and
+  // resume token, replayed after a redirect.
+  const urlRef = useRef<string | null>(null);
   const resumeTokenRef = useRef<string | null>(null);
   // Stable indirection to reopen the socket from a handler (redirect) without a circular dependency.
   const connectRef = useRef<(onReady: () => void) => void>(() => {});
@@ -46,7 +46,7 @@ export function useGameSocket() {
     }
     setStatus("connecting");
     setError(null);
-    const ws = new WebSocket(urlRef.current);
+    const ws = new WebSocket(urlRef.current ?? gameWsUrl());
     wsRef.current = ws;
     ws.onopen = () => {
       setStatus("open");
@@ -62,7 +62,7 @@ export function useGameSocket() {
         // Unwanted drop mid-search: one re-register attempt onto a surviving pod, then give up (no loop if the server is down).
         requeuedRef.current = true;
         const { name, size, ranked } = lastEnqueueRef.current;
-        urlRef.current = WS_URL;
+        urlRef.current = null;
         setTimeout(() => {
           connectRef.current(() => send({ type: "enqueueMatchmaking", name, size, ranked, token: tokenRef.current }));
         }, 1000);
@@ -103,7 +103,7 @@ export function useGameSocket() {
         setResumeUnavailable(true);
       } else if (msg.type === "redirect") {
         // Game lives on another pod: reconnect there and replay the resume.
-        urlRef.current = buildPodWsUrl(WS_URL, msg.pod);
+        urlRef.current = buildPodWsUrl(gameWsUrl(), msg.pod);
         const token = resumeTokenRef.current;
         intentionalCloseRef.current = true;
         try {
@@ -118,7 +118,7 @@ export function useGameSocket() {
         // on the current socket, since off-cluster /pod/<pod> routes nowhere.
         resumeTokenRef.current = msg.resumeToken;
         if (msg.pod && msg.pod !== "local") {
-          urlRef.current = buildPodWsUrl(WS_URL, msg.pod);
+          urlRef.current = buildPodWsUrl(gameWsUrl(), msg.pod);
           intentionalCloseRef.current = true;
           try {
             ws.close();
