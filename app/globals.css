@@ -1,58 +1,71 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0F172A;
-  --color-foreground: #F8FAFC;
-  --color-muted-fg: #94A3B8;
-  --color-felt: #15803D;
-  --color-felt-deep: #0d5b2c;
-  --color-gold: #D97706;
-  --color-gold-soft: #f0b45f;
-  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-background: #0c0e0d;
+  --color-foreground: #ecebe6;
+  --color-muted-fg: #8d928e;
+  --color-felt: #1d3b2e;
+  --color-felt-deep: #132820;
+  --color-gold: #b8914a;
+  --color-gold-soft: #d6b26e;
+  --color-surface: #151817;
+  --color-surface-2: #1c201e;
   --color-border: rgba(255, 255, 255, 0.08);
-  --color-danger: #DC2626;
-  --color-success: #22C55E;
+  --color-danger: #e05a52;
+  --color-success: #4fb67c;
+  --color-ink: #1b1d1c;
+  --color-ink-red: #c2352b;
+  --color-paper: #faf9f5;
   --font-display: var(--font-cinzel);
-  --font-sans: var(--font-josefin);
+  --font-sans: var(--font-inter);
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
   background-color: var(--color-background);
-  background-image: radial-gradient(ellipse at top, #12303a 0%, var(--color-background) 55%);
-  background-repeat: no-repeat;
   color: var(--color-foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
-  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
 }
 
-@keyframes card-in {
+button {
+  touch-action: manipulation;
+}
+
+@keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.92);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 
-.animate-card-in {
-  animation: card-in 0.25s ease-out both;
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out both;
 }
 
 @keyframes turn-timer {
   from {
-    width: 100%;
-    background-color: var(--color-success);
+    transform: scaleX(1);
+    background-color: var(--color-gold-soft);
   }
   to {
-    width: 0%;
+    transform: scaleX(0);
     background-color: var(--color-danger);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-card-in {
+  .animate-fade-in {
     animation: none;
   }
 }

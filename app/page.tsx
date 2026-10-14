@@ -1,17 +1,20 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
-import AudioControls from "./components/AudioControls";
-import AuthBar from "./components/AuthBar";
-import FullscreenToggle from "./components/FullscreenToggle";
-import LocaleSwitcher from "./ui/LocaleSwitcher";
+import { MessageSquare } from "lucide-react";
+import AppHeader, { Brand } from "./components/AppHeader";
+import AccountButton from "./components/AuthBar";
 import ChatPanel from "./components/ChatPanel";
-import GameTable from "./components/GameTable";
-import Leaderboard from "./components/Leaderboard";
+import GameTable, { GameHeaderInfo, RulesButton } from "./components/GameTable";
+import LeaderboardButton from "./components/Leaderboard";
+import SettingsMenu from "./components/SettingsMenu";
+import Dialog from "./ui/Dialog";
+import IconButton from "./ui/IconButton";
 import { Home, RoomLobby, Searching } from "./components/Lobby";
 import { audio } from "./lib/audio";
 import { useAuth } from "./lib/auth";
-import { useLocale } from "./lib/i18n";
+import { useLocale, useT } from "./lib/i18n";
+import { useMediaQuery } from "./lib/useElementSize";
 import { cardsOnTable } from "./lib/game";
 import { useGameSocket } from "./lib/useGameSocket";
 import { saveSession, loadSession, clearSession } from "./lib/session";
@@ -27,6 +30,7 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
   const game = useGameSocket();
   const auth = useAuth();
   const { locale } = useLocale();
+  const t = useT();
   const [variants, setVariants] = useState<Variant[]>([]);
 
   // Rule text is localised server-side, so reload /variants when the locale changes.
@@ -122,27 +126,45 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
     if (game.resumeUnavailable) clearSession();
   }, [game.resumeUnavailable]);
 
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const [asideOpen, setAsideOpen] = useState(true);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const chatCount = game.messages.filter((m) => !m.system).length;
+  const chatVisible = isDesktop ? asideOpen : sheetOpen;
+  const [seenCount, setSeenCount] = useState(0);
+  const unread = chatVisible ? 0 : Math.max(0, chatCount - seenCount);
+  const toggleChat = () => {
+    setSeenCount(chatCount);
+    if (isDesktop) setAsideOpen((o) => !o);
+    else setSheetOpen((o) => !o);
+  };
+
+  const sendChat = (text: string) => {
+    const cmd = text.trim().toLowerCase();
+    if (cmd === "/pause") game.castPauseVote(true);
+    else if (cmd === "/resume") game.resumeGame();
+    else game.sendChat(text);
+  };
+
+  const inGame = game.state !== null && game.state.phase !== "LOBBY";
+
   let content;
   if (!game.state && game.searching) {
     content = <Searching onCancel={game.cancelMatch} />;
   } else if (!game.state) {
     content = (
-      <>
-        <AuthBar />
-        <Home
-          onCreate={game.createRoom}
-          onJoin={game.join}
-          onQuickMatch={game.quickMatch}
-          onRankedMatch={(name) => game.quickMatch(name, 4, true)}
-          isLoggedIn={auth !== null}
-          username={auth?.username ?? null}
-          error={game.error}
-          status={game.status}
-          variants={variants}
-          initialCode={(join ?? "").toUpperCase()}
-        />
-        <Leaderboard />
-      </>
+      <Home
+        onCreate={game.createRoom}
+        onJoin={game.join}
+        onQuickMatch={game.quickMatch}
+        onRankedMatch={(name) => game.quickMatch(name, 4, true)}
+        isLoggedIn={auth !== null}
+        username={auth?.username ?? null}
+        error={game.error}
+        status={game.status}
+        variants={variants}
+        initialCode={(join ?? "").toUpperCase()}
+      />
     );
   } else if (game.state.phase === "LOBBY") {
     content = (
@@ -161,7 +183,6 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
     content = (
       <GameTable
         state={game.state}
-        variants={variants}
         rankedResults={game.rankedResults}
         onPlay={game.play}
         onCastStopVote={game.castStopVote}
@@ -172,13 +193,42 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
   }
 
   return (
-    <main className="min-h-dvh px-4 py-4 text-foreground sm:px-6">
-      <div className="fixed right-4 top-4 z-[60] flex items-center gap-2">
-        <LocaleSwitcher />
-        <FullscreenToggle />
-        <AudioControls />
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <AppHeader left={inGame && game.state ? <GameHeaderInfo state={game.state} /> : <Brand />}>
+        {inGame && game.state && <RulesButton state={game.state} variants={variants} />}
+        {game.roomId ? (
+          <IconButton label={t("chat.title")} onClick={toggleChat} active={chatVisible} badge={unread}>
+            <MessageSquare size={18} />
+          </IconButton>
+        ) : (
+          <>
+            <LeaderboardButton />
+            <AccountButton />
+          </>
+        )}
+        <SettingsMenu />
+      </AppHeader>
+      <div className="flex min-h-0 flex-1">
+        <main className="min-h-0 min-w-0 flex-1">{content}</main>
+        {game.roomId && asideOpen && (
+          <aside className="hidden w-80 shrink-0 border-l border-border lg:flex">
+            <ChatPanel className="w-full" messages={game.messages} onSend={sendChat} disabled={game.seat === null} />
+          </aside>
+        )}
       </div>
-      {content}
+      {game.roomId && !isDesktop && (
+        <Dialog
+          open={sheetOpen}
+          onOpenChange={(open) => {
+            setSeenCount(chatCount);
+            setSheetOpen(open);
+          }}
+          title={t("chat.title")}
+          className="h-[70dvh]"
+        >
+          <ChatPanel className="h-full" messages={game.messages} onSend={sendChat} disabled={game.seat === null} />
+        </Dialog>
+      )}
       <ConnectionToast
         phase={deriveConnectionPhase({
           isOpen: game.status === "open",
@@ -186,24 +236,6 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
           resumeUnavailable: game.resumeUnavailable,
         })}
       />
-      {game.roomId && (
-        <div className="mx-auto mt-6 w-full max-w-5xl">
-          <ChatPanel
-            messages={game.messages}
-            onSend={(text) => {
-              const cmd = text.trim().toLowerCase();
-              if (cmd === "/pause") {
-                game.castPauseVote(true);
-              } else if (cmd === "/resume") {
-                game.resumeGame();
-              } else {
-                game.sendChat(text);
-              }
-            }}
-            disabled={game.seat === null}
-          />
-        </div>
-      )}
-    </main>
+    </div>
   );
 }

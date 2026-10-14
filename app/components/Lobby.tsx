@@ -1,17 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Bot, Check, Copy, Crown, Link2, LogOut } from "lucide-react";
 import type { GameState } from "../lib/game";
 import type { Variant } from "../lib/variants";
 import { loadGuestName, saveGuestName } from "../lib/guest";
 import { useT } from "../lib/i18n";
-import Panel from "../ui/Panel";
+import { cn } from "../lib/cn";
 import Button from "../ui/Button";
-import Crest from "../ui/Crest";
+import Dialog from "../ui/Dialog";
 import VariantRules from "./VariantRules";
 
 const FIELD =
-  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-foreground outline-none focus:border-gold-soft";
+  "h-11 w-full rounded-lg border border-border bg-surface-2 px-3 text-[15px] text-foreground outline-none transition-colors placeholder:text-muted-fg/70 focus:border-gold-soft/60";
+
+const LABEL = "mb-1.5 block text-xs font-medium text-muted-fg";
+
+/** Centers a screen's card in the space under the header; scrolls only if the viewport is absurdly short. */
+export function Screen({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className="flex h-full overflow-y-auto">
+      <div className={cn("m-auto w-full max-w-md p-4", className)}>{children}</div>
+    </div>
+  );
+}
 
 export function Home({
   onCreate,
@@ -39,7 +51,7 @@ export function Home({
   const t = useT();
   const [name, setName] = useState(() => loadGuestName());
   const [playerCount, setPlayerCount] = useState(4);
-  // An invite link lands here as /?join=CODE — seed the join box.
+  // An invite link lands here as /?join=CODE (passed in via searchParams) — seed the join box.
   const [code, setCode] = useState(initialCode);
   const [variantId, setVariantId] = useState("developer");
   const [showRules, setShowRules] = useState(false);
@@ -54,82 +66,69 @@ export function Home({
   };
 
   return (
-    <Panel className="mx-auto mt-16 w-full max-w-md p-8 shadow-2xl">
-      <div className="mb-6 flex flex-col items-center">
-        <Crest size={60} />
-        <h1 className="mt-4 bg-gradient-to-b from-[#fde9c8] to-gold bg-clip-text font-display text-4xl font-bold tracking-[0.08em] text-transparent">
-          LE BARBU
-        </h1>
-        <p className="mt-2 max-w-xs text-center text-sm font-light text-muted-fg">{t("app.tagline")}</p>
-      </div>
+    <Screen>
+      <p className="mb-4 text-center text-sm text-muted-fg">{t("app.tagline")}</p>
 
-      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-fg">
-        {t("home.yourName")}
-      </label>
-      {username ? (
-        <div className="mb-6 flex items-center justify-between rounded-lg border border-gold-soft/30 bg-surface px-3 py-2">
-          <span className="font-semibold text-gold-soft">{username}</span>
-          <span className="text-xs text-muted-fg">{t("home.yourAccount")}</span>
-        </div>
-      ) : (
-        <input
-          data-testid="name-input"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t("home.namePlaceholder")}
-          maxLength={40}
-          className={`mb-6 ${FIELD}`}
-        />
-      )}
+      <div className="rounded-2xl border border-border bg-surface p-5">
+        <label className={LABEL}>{t("home.yourName")}</label>
+        {username ? (
+          <div className="flex h-11 items-center justify-between rounded-lg border border-border bg-surface-2 px-3">
+            <span className="font-medium">{username}</span>
+            <span className="text-xs text-muted-fg">{t("home.yourAccount")}</span>
+          </div>
+        ) : (
+          <input
+            data-testid="name-input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t("home.namePlaceholder")}
+            maxLength={40}
+            className={FIELD}
+          />
+        )}
 
-      <div className="mb-6 rounded-xl border border-border p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm font-semibold text-foreground">{t("home.newTable")}</span>
-          <select
-            data-testid="player-count"
-            value={playerCount}
-            onChange={(e) => setPlayerCount(Number(e.target.value))}
-            className="rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground"
-          >
-            {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
-              <option key={n} value={n} className="bg-background">
-                {t("home.players", { n })}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="mb-3">
-          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-fg">
-            {t("home.variant")}
-          </label>
-          <select
-            value={variantId}
-            onChange={(e) => setVariantId(e.target.value)}
-            className="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-foreground"
-          >
-            {variants.map((v) => (
-              <option key={v.id} value={v.id} className="bg-background">
-                {v.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => setShowRules((s) => !s)}
-            className="mt-1 text-xs text-gold-soft underline-offset-2 hover:underline"
-          >
-            {showRules ? t("home.hideRules") : t("home.showRules")}
-          </button>
-          {showRules && selectedVariant && (
-            <div className="mt-2">
-              <VariantRules variant={selectedVariant} />
+        <div className="mt-4 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
+          <div>
+            <label className={LABEL}>{t("home.newTable")}</label>
+            <select
+              data-testid="player-count"
+              value={playerCount}
+              onChange={(e) => setPlayerCount(Number(e.target.value))}
+              className={FIELD}
+            >
+              {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
+                <option key={n} value={n} className="bg-surface">
+                  {t("home.players", { n })}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <div className="mb-1.5 flex items-baseline justify-between">
+              <label className="text-xs font-medium text-muted-fg">{t("home.variant")}</label>
+              {selectedVariant && (
+                <button
+                  type="button"
+                  onClick={() => setShowRules(true)}
+                  className="text-xs text-gold-soft hover:underline"
+                >
+                  {t("home.rules")}
+                </button>
+              )}
             </div>
-          )}
+            <select value={variantId} onChange={(e) => setVariantId(e.target.value)} className={FIELD}>
+              {variants.map((v) => (
+                <option key={v.id} value={v.id} className="bg-surface">
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
         <Button
           data-testid="quick-match"
-          variant="gold"
-          className="w-full"
+          className="mt-5 w-full"
           onClick={() => {
             remember(name);
             onQuickMatch(displayName, playerCount);
@@ -137,80 +136,86 @@ export function Home({
         >
           {t("home.quickMatch")}
         </Button>
-        <Button
-          data-testid="create-table"
-          variant="ghost"
-          size="sm"
-          className="mt-2 w-full"
-          onClick={() => {
+        <div className={cn("mt-2 grid gap-2", isLoggedIn ? "grid-cols-2" : "grid-cols-1")}>
+          <Button
+            data-testid="create-table"
+            variant="ghost"
+            onClick={() => {
+              remember(name);
+              onCreate(displayName, playerCount, variantId);
+            }}
+          >
+            {t("home.createTable")}
+          </Button>
+          {isLoggedIn && (
+            <Button data-testid="ranked-match" variant="ghost" onClick={() => onRankedMatch(displayName)}>
+              {t("home.ranked")}
+            </Button>
+          )}
+        </div>
+        {!isLoggedIn && <p className="mt-2 text-center text-xs text-muted-fg">{t("home.loginForRanked")}</p>}
+
+        <div className="my-5 h-px bg-border" />
+
+        <label className={LABEL}>{t("home.joinTitle")}</label>
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (code.length < 4) return;
             remember(name);
-            onCreate(displayName, playerCount, variantId);
+            onJoin(displayName, code);
           }}
         >
-          {t("home.createTable")}
-        </Button>
-        {isLoggedIn ? (
-          <Button data-testid="ranked-match" variant="ghost" size="sm" className="mt-2 w-full" onClick={() => onRankedMatch(displayName)}>
-            {t("home.ranked")}
-          </Button>
-        ) : (
-          <p className="mt-2 text-center text-xs text-muted-fg">{t("home.loginForRanked")}</p>
-        )}
-      </div>
-
-      <div className="rounded-xl border border-border p-4">
-        <span className="mb-3 block text-sm font-semibold text-foreground">{t("home.joinTitle")}</span>
-        <div className="flex gap-2">
           <input
             data-testid="join-code"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="ABCDE"
             maxLength={5}
-            className={`${FIELD} font-mono uppercase tracking-widest`}
+            autoCapitalize="characters"
+            autoComplete="off"
+            className={cn(FIELD, "font-mono uppercase tracking-[0.3em]")}
           />
-          <Button
-            data-testid="join-button"
-            variant="ghost"
-            size="sm"
-            className="shrink-0"
-            onClick={() => {
-              remember(name);
-              onJoin(displayName, code);
-            }}
-            disabled={code.length < 4}
-          >
+          <Button data-testid="join-button" type="submit" variant="ghost" className="shrink-0" disabled={code.length < 4}>
             {t("home.joinButton")}
           </Button>
-        </div>
+        </form>
+
+        {(error || status === "connecting") && (
+          <p className={cn("mt-4 text-center text-sm", error ? "text-danger" : "text-muted-fg")}>
+            {error ?? t("status.connecting")}
+          </p>
+        )}
       </div>
 
-      {error && <p className="mt-4 text-center text-sm text-danger">{error}</p>}
-      {status === "connecting" && (
-        <p className="mt-4 text-center text-sm text-muted-fg">{t("status.connecting")}</p>
+      {selectedVariant && (
+        <Dialog open={showRules} onOpenChange={setShowRules} title={selectedVariant.name}>
+          <VariantRules variant={selectedVariant} />
+        </Dialog>
       )}
-    </Panel>
+    </Screen>
   );
 }
 
 export function Searching({ onCancel }: { onCancel: () => void }) {
   const t = useT();
   return (
-    <Panel className="mx-auto mt-16 w-full max-w-md p-8 text-center shadow-2xl">
-      <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-2 border-gold-soft/30 border-t-gold-soft" />
-      <h2 className="mb-1 font-display text-xl font-semibold text-foreground">{t("searching.title")}</h2>
-      <p className="mb-6 text-sm text-muted-fg">{t("searching.subtitle")}</p>
-      <Button data-testid="cancel-search" variant="ghost" className="w-full" onClick={onCancel}>
+    <Screen className="text-center">
+      <div className="mx-auto mb-6 h-9 w-9 animate-spin rounded-full border-2 border-white/10 border-t-gold-soft" />
+      <h2 className="text-lg font-semibold">{t("searching.title")}</h2>
+      <p className="mt-1 text-sm text-muted-fg">{t("searching.subtitle")}</p>
+      <Button data-testid="cancel-search" variant="ghost" className="mt-6 w-full" onClick={onCancel}>
         {t("searching.cancel")}
       </Button>
-    </Panel>
+    </Screen>
   );
 }
 
 function BotNameInput({ name, onCommit }: { name: string; onCommit: (n: string) => void }) {
   const [value, setValue] = useState(name);
   const focused = useRef(false);
-  // Resync to the server name only while not editing, so we don't overwrite typing.
+  // Resync with the server name only while not editing, so typing isn't overwritten.
   useEffect(() => {
     if (!focused.current) setValue(name);
   }, [name]);
@@ -232,7 +237,7 @@ function BotNameInput({ name, onCommit }: { name: string; onCommit: (n: string) 
       onKeyDown={(e) => {
         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
       }}
-      className="w-40 rounded border border-border bg-surface px-2 py-1 text-sm text-foreground outline-none focus:border-gold-soft"
+      className="-ml-1.5 h-8 min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 text-sm text-foreground outline-none hover:border-border focus:border-gold-soft/60 focus:bg-surface"
     />
   );
 }
@@ -274,86 +279,101 @@ export function RoomLobby({
   };
 
   return (
-    <Panel className="mx-auto mt-16 w-full max-w-lg p-8 shadow-2xl">
-      <p className="text-center text-xs uppercase tracking-wide text-muted-fg">{t("lobby.shareCode")}</p>
-      <button
-        type="button"
-        data-testid="room-code"
-        onClick={() => copy(state.roomId, "code")}
-        title={t("lobby.copyCode")}
-        className="mx-auto mb-3 block font-display text-5xl font-bold tracking-[0.3em] text-gold-soft transition hover:brightness-110"
-      >
-        {state.roomId}
-      </button>
-      <div className="mb-6 flex items-center gap-2">
-        <input
-          readOnly
-          value={inviteLink}
-          onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 truncate rounded-lg border border-border bg-surface px-3 py-2 text-xs text-muted-fg outline-none"
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="shrink-0"
-          onClick={() => copy(inviteLink, "link")}
-        >
-          {copied === "link" ? t("lobby.copied") : copied === "code" ? t("lobby.codeCopied") : t("lobby.copyLink")}
-        </Button>
-      </div>
-
-      <ul className="mb-6 space-y-2">
-        {state.players.map((p) => {
-          const open = isOpen(p);
-          const away = !p.bot && !p.connected && !open; // disconnected member holding their seat
-          return (
-            <li
-              key={p.seat}
-              data-testid="lobby-seat"
-              className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-2"
-            >
-              <span className="flex items-center gap-2 text-foreground">
-                {p.bot && isHost ? (
-                  <BotNameInput name={p.name} onCommit={(n) => onRenameBot(p.seat, n)} />
-                ) : open ? (
-                  <span className="italic text-muted-fg">{t("lobby.emptySeat")}</span>
-                ) : (
-                  <span className={away ? "text-muted-fg" : undefined}>
-                    {p.name}
-                    {away && <span className="ml-1 text-xs italic text-gold-soft/80">({t("lobby.disconnected")})</span>}
-                  </span>
-                )}
-                {p.seat === state.yourSeat && <span className="text-xs text-gold-soft">({t("table.you")})</span>}
-                {p.seat === hostSeat && <span className="text-xs text-gold">({t("lobby.host")})</span>}
-              </span>
-              <span className="text-xs uppercase tracking-wide text-muted-fg">
-                {p.bot ? t("table.bot") : open ? "—" : away ? t("lobby.away") : t("table.human")}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-
-      {isHost ? (
-        <div className="flex gap-3">
-          <Button data-testid="add-bot" variant="ghost" className="flex-1" onClick={onAddBot} disabled={full}>
-            {t("lobby.addBot")}
-          </Button>
-          <Button data-testid="start-game" variant="gold" className="flex-1" onClick={onStart} disabled={!full}>
-            {t("lobby.start")}
-          </Button>
+    <div className="flex h-full overflow-y-auto">
+      <div className="m-auto flex w-full max-w-xl flex-col p-4">
+        <div className="mb-4 text-center">
+          <p className="text-xs font-medium text-muted-fg">{t("lobby.shareCode")}</p>
+          <button
+            type="button"
+            data-testid="room-code"
+            onClick={() => copy(state.roomId, "code")}
+            title={t("lobby.copyCode")}
+            className="mt-1 font-mono text-4xl font-semibold tracking-[0.3em] text-foreground transition-colors hover:text-gold-soft sm:text-5xl"
+          >
+            {state.roomId}
+          </button>
+          <div className="mt-3 flex justify-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => copy(state.roomId, "code")}>
+              {copied === "code" ? <Check size={16} /> : <Copy size={16} />}
+              {copied === "code" ? t("lobby.codeCopied") : t("lobby.copyCode")}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => copy(inviteLink, "link")}>
+              {copied === "link" ? <Check size={16} /> : <Link2 size={16} />}
+              {copied === "link" ? t("lobby.copied") : t("lobby.copyLink")}
+            </Button>
+          </div>
         </div>
-      ) : (
-        <p className="mb-3 text-center text-sm text-muted-fg">{t("lobby.waitingHost")}</p>
-      )}
 
-      <button
-        data-testid="leave-table"
-        onClick={onLeave}
-        className="mt-3 w-full rounded-lg border border-danger/40 py-2 text-sm font-semibold text-danger transition hover:bg-danger/10"
-      >
-        {t("lobby.leaveTable")}
-      </button>
-    </Panel>
+        <div className="rounded-2xl border border-border bg-surface p-2">
+          <div className="flex items-center justify-between px-2 pb-2 pt-1 text-xs text-muted-fg">
+            <span>{t("lobby.players")}</span>
+            <span className="tabular-nums">
+              {filled} / {state.playerCount}
+            </span>
+          </div>
+          <ul className={cn("grid gap-1", state.playerCount > 4 && "grid-cols-2")}>
+            {state.players.map((p) => {
+              const open = isOpen(p);
+              const away = !p.bot && !p.connected && !open; // disconnected member holding their seat
+              const you = p.seat === state.yourSeat;
+              return (
+                <li
+                  key={p.seat}
+                  data-testid="lobby-seat"
+                  className={cn(
+                    "flex h-10 min-w-0 items-center gap-1.5 rounded-lg px-2 text-sm",
+                    open ? "border border-dashed border-border" : "bg-surface-2",
+                  )}
+                >
+                  <span className="grid h-6 w-6 shrink-0 place-items-center text-muted-fg">
+                    {p.seat === hostSeat ? (
+                      <Crown size={15} className="text-gold-soft" aria-label={t("lobby.host")} />
+                    ) : p.bot ? (
+                      <Bot size={15} aria-label={t("table.bot")} />
+                    ) : (
+                      <span className={cn("h-2 w-2 rounded-full", open ? "bg-white/10" : away ? "bg-danger" : "bg-success")} />
+                    )}
+                  </span>
+                  {p.bot && isHost ? (
+                    <BotNameInput name={p.name} onCommit={(n) => onRenameBot(p.seat, n)} />
+                  ) : (
+                    <span className={cn("min-w-0 flex-1 truncate", (open || away) && "text-muted-fg", open && "italic")}>
+                      {open ? t("lobby.emptySeat") : p.name}
+                      {away && <span className="ml-1.5 text-xs">· {t("lobby.away")}</span>}
+                    </span>
+                  )}
+                  {you && <span className="shrink-0 text-xs text-gold-soft">{t("table.you")}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-2">
+          {isHost ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Button data-testid="add-bot" variant="ghost" onClick={onAddBot} disabled={full}>
+                <Bot size={16} />
+                {t("lobby.addBot")}
+              </Button>
+              <Button data-testid="start-game" onClick={onStart} disabled={!full}>
+                {t("lobby.start")}
+              </Button>
+            </div>
+          ) : (
+            <p className="py-2 text-center text-sm text-muted-fg">{t("lobby.waitingHost")}</p>
+          )}
+          <button
+            type="button"
+            data-testid="leave-table"
+            onClick={onLeave}
+            className="flex h-10 items-center justify-center gap-2 rounded-lg text-sm text-muted-fg transition-colors hover:bg-danger/10 hover:text-danger"
+          >
+            <LogOut size={15} />
+            {t("lobby.leaveTable")}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

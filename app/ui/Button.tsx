@@ -6,15 +6,15 @@ type Variant = "gold" | "ghost" | "danger" | "success";
 type Size = "sm" | "md";
 
 const VARIANTS: Record<Variant, string> = {
-  gold: "bg-gradient-to-b from-gold-soft to-gold text-[#3a1e02] shadow-lg shadow-gold/30 hover:brightness-105",
-  ghost: "bg-surface border border-border text-foreground hover:bg-white/5",
-  danger: "bg-danger text-white hover:brightness-110",
-  success: "bg-success text-white hover:brightness-110",
+  gold: "bg-gold-soft text-[#231a08] hover:bg-[#dfbd7c]",
+  ghost: "border border-border bg-surface-2 text-foreground hover:bg-white/[0.07]",
+  danger: "border border-danger/40 bg-danger/10 text-danger hover:bg-danger/20",
+  success: "bg-success text-[#08180f] hover:brightness-110",
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "px-4 py-2 text-sm",
-  md: "px-6 py-3 text-[15px]",
+  sm: "h-9 px-3.5 text-sm",
+  md: "h-11 px-5 text-[15px]",
 };
 
 export default function Button({
@@ -25,11 +25,12 @@ export default function Button({
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size }) {
   return (
     <button
+      type="button"
       {...props}
       className={cn(
-        "inline-flex select-none items-center justify-center gap-2 rounded-xl font-semibold tracking-wide transition duration-200",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-soft focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:-translate-y-0.5",
+        "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-colors duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-soft/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "disabled:cursor-not-allowed disabled:opacity-40",
         VARIANTS[variant],
         SIZES[size],
         className,

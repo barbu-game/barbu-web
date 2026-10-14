@@ -14,6 +14,8 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
+    // Card lift/re-fan transitions would otherwise make every click wait for the card to settle.
+    contextOptions: { reducedMotion: "reduce" },
     video: "retain-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

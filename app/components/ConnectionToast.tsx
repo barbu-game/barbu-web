@@ -5,14 +5,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useT } from "../lib/i18n";
 import type { ConnectionPhase } from "../lib/connectionPhase";
 
-const STYLES: Record<"reconnecting" | "reconnected" | "failed", string> = {
-  reconnecting: "bg-amber-500/95 text-amber-950",
-  reconnected: "bg-emerald-500/95 text-emerald-950",
-  failed: "bg-red-600/95 text-red-50",
+const DOT: Record<"reconnecting" | "reconnected" | "failed", string> = {
+  reconnecting: "bg-gold-soft animate-pulse",
+  reconnected: "bg-success",
+  failed: "bg-danger",
 };
 
-// `phase` is the stable phase (connected/reconnecting/failed); the transient reconnected success
-// is local state on the reconnecting→connected edge, else the recovery would be invisible.
+// Connection status toast, top-centre so it never covers the hand. `phase` is the stable phase;
+// the brief "Reconnected ✓" is local state, raised on the reconnecting → connected edge,
+// otherwise the recovery would be invisible.
 export default function ConnectionToast({ phase }: { phase: ConnectionPhase }) {
   const t = useT();
   const [justReconnected, setJustReconnected] = useState(false);
@@ -46,21 +47,14 @@ export default function ConnectionToast({ phase }: { phase: ConnectionPhase }) {
       {variant && (
         <motion.div
           key={variant}
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 16 }}
+          exit={{ opacity: 0, y: -8 }}
           role="status"
           aria-live="polite"
-          className={`fixed bottom-4 left-1/2 z-[70] flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-lg ${STYLES[variant]}`}
+          className="fixed left-1/2 top-16 z-[70] flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border border-border bg-surface-2 px-4 py-2 text-sm shadow-xl"
         >
-          {variant === "reconnecting" && (
-            <motion.span
-              aria-hidden
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, ease: "linear", duration: 1 }}
-              className="inline-block h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent"
-            />
-          )}
+          <span className={`h-2 w-2 rounded-full ${DOT[variant]}`} />
           {label}
         </motion.div>
       )}

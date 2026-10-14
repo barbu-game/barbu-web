@@ -19,7 +19,9 @@ async function playOneMove(page: Page): Promise<boolean> {
   const first = page.locator(PLAYABLE).first();
   if (await first.isVisible().catch(() => false)) {
     const dataCard = await first.getAttribute("data-card").catch(() => null);
-    await first.click().catch(() => {});
+    // The hand is a tight fan: only each card's left edge is uncovered, so click there
+    // (the centre is under the next card and the click would wait forever).
+    await first.click({ position: { x: 6, y: 24 }, timeout: 5_000 }).catch(() => {});
     if (dataCard) {
       await page
         .locator(`[data-testid="your-hand"] [data-card="${dataCard}"]`)

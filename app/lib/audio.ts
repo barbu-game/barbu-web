@@ -18,6 +18,10 @@ class AudioManager {
     this.sfxOn = on;
   }
 
+  isSfxOn() {
+    return this.sfxOn;
+  }
+
   /** Short filtered noise burst — a card landing on the table. */
   playCard() {
     if (!this.sfxOn) {

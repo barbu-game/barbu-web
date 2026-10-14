@@ -5,44 +5,52 @@ import { cn } from "../lib/cn";
 
 type Props = {
   card: CardT;
-  size?: "sm" | "md" | "lg";
+  /** Card width in px; height and type follow the 5:7 ratio. */
+  width?: number;
   playable?: boolean;
   dimmed?: boolean;
   highlight?: boolean;
+  /** Raise a legal card at rest so it reads as playable on touch screens, where hover doesn't exist. */
+  raised?: boolean;
   onClick?: () => void;
+  className?: string;
 };
 
-const SIZES = {
-  sm: "h-[70px] w-[50px] text-[13px] rounded-md p-1",
-  md: "h-[100px] w-[72px] text-lg rounded-lg p-1.5",
-  lg: "h-[114px] w-[82px] text-xl rounded-[11px] p-2",
-};
+export const CARD_RATIO = 1.4;
 
-export default function Card({ card, size = "md", playable, dimmed, highlight, onClick }: Props) {
+export default function Card({ card, width = 72, playable, dimmed, highlight, raised, onClick, className }: Props) {
   const red = isRedSuit(card.suit);
+  const suit = SUIT_SYMBOL[card.suit];
+  const interactive = Boolean(playable && onClick);
   return (
     <button
       type="button"
       data-testid="card"
       data-card={`${card.suit}-${card.rank}`}
       data-playable={playable ? "true" : "false"}
-      disabled={!playable || !onClick}
+      disabled={!interactive}
       onClick={onClick}
+      style={{ width, height: Math.round(width * CARD_RATIO), fontSize: Math.max(10, width * 0.24) }}
       className={cn(
-        "relative flex select-none flex-col justify-between bg-gradient-to-b from-white to-[#f2f4f8] font-display font-bold shadow-[0_12px_24px_rgba(0,0,0,0.4)] ring-1 ring-black/5 transition-all duration-200",
-        SIZES[size],
-        red ? "text-danger" : "text-[#0f172a]",
-        highlight && "-translate-y-2.5 ring-2 ring-gold-soft shadow-[0_18px_30px_rgba(0,0,0,0.5)]",
-        playable && "cursor-pointer hover:-translate-y-4 hover:shadow-[0_20px_34px_rgba(0,0,0,0.5)]",
-        dimmed && "opacity-40 saturate-50",
+        "relative block shrink-0 select-none rounded-[0.32em] bg-paper text-left font-semibold leading-none",
+        "shadow-[0_1px_2px_rgba(0,0,0,0.35),0_6px_14px_rgba(0,0,0,0.25)] ring-1 ring-black/10",
+        "transition-[transform,opacity,box-shadow] duration-150 ease-out motion-reduce:transition-none disabled:cursor-default",
+        red ? "text-ink-red" : "text-ink",
+        raised && "-translate-y-[10%]",
+        highlight && "ring-2 ring-gold-soft",
+        interactive && "cursor-pointer hover:-translate-y-[18%] hover:shadow-[0_10px_24px_rgba(0,0,0,0.45)]",
+        dimmed && "brightness-[0.55]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-soft",
+        className,
       )}
     >
-      <span className="self-start leading-none">{rankLabel(card.rank)}</span>
-      <span className="absolute inset-0 grid place-items-center text-[2.1em] leading-none opacity-90">
-        {SUIT_SYMBOL[card.suit]}
+      <span className="absolute left-[0.28em] top-[0.3em] flex flex-col items-center gap-[0.08em]">
+        <span className="tracking-tight">{rankLabel(card.rank)}</span>
+        <span className="text-[0.8em]">{suit}</span>
       </span>
-      <span className="self-end rotate-180 leading-none">{rankLabel(card.rank)}</span>
+      <span aria-hidden className="absolute bottom-[0.22em] right-[0.3em] text-[1.9em] leading-none">
+        {suit}
+      </span>
     </button>
   );
 }
