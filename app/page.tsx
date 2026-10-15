@@ -6,6 +6,7 @@ import AppHeader, { Brand } from "./components/AppHeader";
 import AccountButton from "./components/AuthBar";
 import ChatPanel from "./components/ChatPanel";
 import GameTable, { GameHeaderInfo, RulesButton } from "./components/GameTable";
+import RamiTable from "./components/RamiTable";
 import LeaderboardButton from "./components/Leaderboard";
 import SettingsMenu from "./components/SettingsMenu";
 import Dialog from "./ui/Dialog";
@@ -177,6 +178,16 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
           clearSession();
           game.leave();
         }}
+      />
+    );
+  } else if (game.state.gameType === "RAMI") {
+    content = (
+      <RamiTable
+        state={game.state}
+        error={game.error}
+        onPlay={game.play}
+        onCastPauseVote={game.castPauseVote}
+        onResume={game.resumeGame}
       />
     );
   } else {

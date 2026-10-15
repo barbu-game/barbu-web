@@ -69,6 +69,7 @@ export const isYourTurn = (state: GameState) => state.currentActor === state.you
 /** Number of cards currently shown on the table — grows by one each time a card is played. */
 export function cardsOnTable(state: GameState | null): number {
   if (!state) return 0;
+  if (state.rami?.melds) return state.rami.melds.reduce((n, m) => n + m.cards.length, 0);
   if (state.trick?.plays) return state.trick.plays.length;
   if (state.board) {
     return Object.values(state.board).reduce((n, c) => n + (c.opened ? c.high - c.low + 1 : 0), 0);

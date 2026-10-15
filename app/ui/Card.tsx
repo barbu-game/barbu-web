@@ -1,10 +1,11 @@
 "use client";
 
-import { isRedSuit, rankLabel, SUIT_SYMBOL, type CardT } from "../lib/game";
+import { isRedSuit, rankLabel, SUIT_SYMBOL } from "../lib/game";
 import { cn } from "../lib/cn";
 
 type Props = {
-  card: CardT;
+  /** A Barbu card, or a Rami card where a joker has no suit or rank. */
+  card: { suit?: string | null; rank?: string | null; joker?: boolean };
   /** Card width in px; height and type follow the 5:7 ratio. */
   width?: number;
   playable?: boolean;
@@ -19,14 +20,15 @@ type Props = {
 export const CARD_RATIO = 1.4;
 
 export default function Card({ card, width = 72, playable, dimmed, highlight, raised, onClick, className }: Props) {
-  const red = isRedSuit(card.suit);
-  const suit = SUIT_SYMBOL[card.suit];
+  const joker = Boolean(card.joker);
+  const red = !joker && isRedSuit(card.suit ?? "");
+  const suit = joker ? "★" : SUIT_SYMBOL[card.suit ?? ""];
   const interactive = Boolean(playable && onClick);
   return (
     <button
       type="button"
       data-testid="card"
-      data-card={`${card.suit}-${card.rank}`}
+      data-card={joker ? "JOKER" : `${card.suit}-${card.rank}`}
       data-playable={playable ? "true" : "false"}
       disabled={!interactive}
       onClick={onClick}
@@ -35,7 +37,7 @@ export default function Card({ card, width = 72, playable, dimmed, highlight, ra
         "relative block shrink-0 select-none rounded-[0.32em] bg-paper text-left font-semibold leading-none",
         "shadow-[0_1px_2px_rgba(0,0,0,0.35),0_6px_14px_rgba(0,0,0,0.25)] ring-1 ring-black/10",
         "transition-[transform,opacity,box-shadow] duration-150 ease-out motion-reduce:transition-none disabled:cursor-default",
-        red ? "text-ink-red" : "text-ink",
+        joker ? "text-gold" : red ? "text-ink-red" : "text-ink",
         raised && "-translate-y-[10%]",
         highlight && "ring-2 ring-gold-soft",
         interactive && "cursor-pointer hover:-translate-y-[18%] hover:shadow-[0_10px_24px_rgba(0,0,0,0.45)]",
@@ -45,7 +47,7 @@ export default function Card({ card, width = 72, playable, dimmed, highlight, ra
       )}
     >
       <span className="absolute left-[0.28em] top-[0.3em] flex flex-col items-center gap-[0.08em]">
-        <span className="tracking-tight">{rankLabel(card.rank)}</span>
+        <span className="tracking-tight">{joker ? "JK" : rankLabel(card.rank ?? "")}</span>
         <span className="text-[0.8em]">{suit}</span>
       </span>
       <span aria-hidden className="absolute bottom-[0.22em] right-[0.3em] text-[1.9em] leading-none">

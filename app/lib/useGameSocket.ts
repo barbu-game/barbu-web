@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatBroadcast, RankedMessagesRankedResultEntry } from "@barbu-game/barbu-api";
 import type { GameState, MoveT } from "./game";
+import type { RamiMove } from "./rami";
 import { buildPodWsUrl } from "./redirect";
 import { gameWsUrl } from "./wsUrl";
 
@@ -92,6 +93,8 @@ export function useGameSocket() {
         setSearching(false);
       } else if (msg.type === "state") {
         setState(msg as GameState);
+        // A rejected move leaves the state unchanged, so any new state means the error is stale.
+        setError(null);
         setSearching(false);
         // A fresh state proves a live session: clear any resumeUnavailable left armed by an earlier resume.
         setResumeUnavailable(false);
@@ -147,8 +150,8 @@ export function useGameSocket() {
   }, []);
 
   const createRoom = useCallback(
-    (name: string, playerCount: number, variant: string) =>
-      ensureSocket(() => send({ type: "createRoom", name, playerCount, variant, token: tokenRef.current })),
+    (name: string, playerCount: number, variant: string, gameType: "BARBU" | "RAMI" = "BARBU") =>
+      ensureSocket(() => send({ type: "createRoom", name, playerCount, variant, gameType, token: tokenRef.current })),
     [ensureSocket, send],
   );
 
@@ -195,7 +198,7 @@ export function useGameSocket() {
     setMessages([]);
   }, [send]);
   const start = useCallback(() => send({ type: "start" }), [send]);
-  const play = useCallback((move: MoveT) => send({ type: "play", move }), [send]);
+  const play = useCallback((move: MoveT | RamiMove) => send({ type: "play", move }), [send]);
   const castStopVote = useCallback((stop: boolean) => send({ type: "castStopVote", stop }), [send]);
   const castPauseVote = useCallback((pause: boolean) => send({ type: "castPauseVote", pause }), [send]);
   const resumeGame = useCallback(() => send({ type: "resumeGame" }), [send]);
