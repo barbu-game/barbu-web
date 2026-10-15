@@ -37,7 +37,7 @@ export function Home({
   variants,
   initialCode,
 }: {
-  onCreate: (name: string, playerCount: number, variant: string) => void;
+  onCreate: (name: string, playerCount: number, variant: string, gameType: "BARBU" | "RAMI") => void;
   onJoin: (name: string, code: string) => void;
   onQuickMatch: (name: string, size: number) => void;
   onRankedMatch: (name: string) => void;
@@ -54,6 +54,10 @@ export function Home({
   // An invite link lands here as /?join=CODE (passed in via searchParams) — seed the join box.
   const [code, setCode] = useState(initialCode);
   const [variantId, setVariantId] = useState("developer");
+  const [gameType, setGameType] = useState<"BARBU" | "RAMI">("BARBU");
+  const rami = gameType === "RAMI";
+  const [ramiCount, setRamiCount] = useState(5);
+  const tableSize = rami ? ramiCount : playerCount;
   const [showRules, setShowRules] = useState(false);
 
   // A signed-in player carries their account pseudo — no name to pick.
@@ -87,22 +91,43 @@ export function Home({
           />
         )}
 
-        <div className="mt-4 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
+        <label className={cn(LABEL, "mt-4")}>{t("home.game")}</label>
+        <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface-2 p-1" role="radiogroup">
+          {(["BARBU", "RAMI"] as const).map((g) => (
+            <button
+              key={g}
+              type="button"
+              role="radio"
+              aria-checked={gameType === g}
+              data-testid={`game-${g.toLowerCase()}`}
+              onClick={() => setGameType(g)}
+              className={cn(
+                "h-9 rounded-md text-sm font-medium transition-colors",
+                gameType === g ? "bg-surface text-foreground shadow-sm" : "text-muted-fg hover:text-foreground",
+              )}
+            >
+              {t(g === "BARBU" ? "game.barbu" : "game.rami")}
+            </button>
+          ))}
+        </div>
+
+        <div className={cn("mt-4 grid gap-3", rami ? "grid-cols-1" : "grid-cols-[minmax(0,2fr)_minmax(0,3fr)]")}>
           <div>
             <label className={LABEL}>{t("home.newTable")}</label>
             <select
               data-testid="player-count"
-              value={playerCount}
-              onChange={(e) => setPlayerCount(Number(e.target.value))}
+              value={tableSize}
+              onChange={(e) => (rami ? setRamiCount : setPlayerCount)(Number(e.target.value))}
               className={FIELD}
             >
-              {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
+              {(rami ? [4, 5] : Array.from({ length: 9 }, (_, i) => i + 2)).map((n) => (
                 <option key={n} value={n} className="bg-surface">
                   {t("home.players", { n })}
                 </option>
               ))}
             </select>
           </div>
+          {!rami && (
           <div>
             <div className="mb-1.5 flex items-baseline justify-between">
               <label className="text-xs font-medium text-muted-fg">{t("home.variant")}</label>
@@ -124,8 +149,25 @@ export function Home({
               ))}
             </select>
           </div>
+          )}
         </div>
 
+        {rami ? (
+          <>
+            <p className="mt-3 text-xs text-muted-fg">{t("home.ramiNote")}</p>
+            <Button
+              data-testid="create-table"
+              className="mt-4 w-full"
+              onClick={() => {
+                remember(name);
+                onCreate(displayName, tableSize, variantId, "RAMI");
+              }}
+            >
+              {t("home.createTable")}
+            </Button>
+          </>
+        ) : (
+          <>
         <Button
           data-testid="quick-match"
           className="mt-5 w-full"
@@ -142,7 +184,7 @@ export function Home({
             variant="ghost"
             onClick={() => {
               remember(name);
-              onCreate(displayName, playerCount, variantId);
+              onCreate(displayName, playerCount, variantId, "BARBU");
             }}
           >
             {t("home.createTable")}
@@ -154,6 +196,8 @@ export function Home({
           )}
         </div>
         {!isLoggedIn && <p className="mt-2 text-center text-xs text-muted-fg">{t("home.loginForRanked")}</p>}
+          </>
+        )}
 
         <div className="my-5 h-px bg-border" />
 

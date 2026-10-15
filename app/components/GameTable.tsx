@@ -40,7 +40,7 @@ const RANK_ORDER = [
 ];
 
 // Below this felt width, opponents move to a strip above the felt instead of sitting around it.
-const NARROW_FELT = 640;
+export const NARROW_FELT = 640;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
@@ -59,11 +59,11 @@ function contractName(t: T, key?: string | null): string {
 }
 
 // Typographic minus: the ASCII hyphen sits too short and loose next to tabular figures.
-const num = (n: number) => (n < 0 ? `\u2212${-n}` : String(n));
-const signed = (n: number) => (n > 0 ? `+${n}` : num(n));
+export const num = (n: number) => (n < 0 ? `\u2212${-n}` : String(n));
+export const signed = (n: number) => (n > 0 ? `+${n}` : num(n));
 
 /** Opponents in clockwise order starting from the player on your left. */
-function opponents(state: GameState): Player[] {
+export function opponents(state: GameState): Player[] {
   const you = state.yourSeat ?? 0;
   return state.players
     .filter((p) => p.seat !== you)
@@ -72,12 +72,19 @@ function opponents(state: GameState): Player[] {
 
 export function GameHeaderInfo({ state }: { state: GameState }) {
   const t = useT();
-  const round = Math.min((state.roundNumber ?? 0) + 1, state.plannedRounds ?? Infinity);
+  const rami = state.gameType === "RAMI";
+  // The Rami counts the round in progress; the Barbu counts rounds already played.
+  const round =
+    rami && state.phase === "PLAYING"
+      ? (state.roundNumber ?? 1)
+      : Math.min((state.roundNumber ?? 0) + 1, state.plannedRounds ?? Infinity);
   return (
     <div className="min-w-0 leading-tight">
       <p className="truncate text-[15px] font-semibold">
         {state.phase === "GAME_OVER" ? (
           t("over.title")
+        ) : rami ? (
+          t("game.rami")
         ) : state.contract ? (
           contractName(t, state.contract)
         ) : state.nextContract ? (
@@ -158,7 +165,7 @@ export default function GameTable({
   );
 }
 
-function Overlay({ children }: { children: React.ReactNode }) {
+export function Overlay({ children }: { children: React.ReactNode }) {
   return (
     <div className="absolute inset-0 z-10 flex overflow-y-auto bg-background/40 p-3 backdrop-blur-[2px]">
       <div className="animate-fade-in m-auto w-full max-w-sm rounded-2xl border border-border bg-surface/95 p-5 shadow-2xl">
@@ -214,7 +221,7 @@ function seatCenters(size: { width: number; height: number }, state: GameState) 
 }
 
 /** Largest centred area free of seat tiles, shrinking from whichever side each tile mostly sits on. */
-function freeArea(size: { width: number; height: number }, state: GameState) {
+export function freeArea(size: { width: number; height: number }, state: GameState) {
   const pw = SEAT_W(size.width);
   const cx = size.width / 2;
   const cy = size.height / 2;
@@ -231,7 +238,7 @@ function freeArea(size: { width: number; height: number }, state: GameState) {
   return { x: cx - hw, y: cy - hh, w: 2 * hw, h: 2 * hh };
 }
 
-function SeatsAround({ state, players, size }: { state: GameState; players: Player[]; size: { width: number; height: number } }) {
+export function SeatsAround({ state, players, size }: { state: GameState; players: Player[]; size: { width: number; height: number } }) {
   const pw = SEAT_W(size.width);
   const centers = new Map(seatCenters(size, state).map((c) => [c.seat, c]));
   return (
@@ -252,7 +259,7 @@ function SeatsAround({ state, players, size }: { state: GameState; players: Play
   );
 }
 
-function OpponentStrip({ state, players }: { state: GameState; players: Player[] }) {
+export function OpponentStrip({ state, players }: { state: GameState; players: Player[] }) {
   const cols = players.length <= 3 ? players.length : players.length === 4 ? 2 : 3;
   return (
     <div className="grid shrink-0 gap-1.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
@@ -289,6 +296,9 @@ function SeatBadge({ state, p, compact }: { state: GameState; p: Player; compact
             D
           </span>
         )}
+        {state.rami?.opened?.[p.seat] && (
+          <span className="shrink-0 rounded bg-success/15 px-1 text-[10px] font-medium text-success">{t("rami.opened")}</span>
+        )}
         {offline && <span title={t("lobby.disconnected")} className="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />}
       </div>
       <div className={cn("flex items-center gap-2 tabular-nums text-muted-fg", compact ? "text-[11px]" : "text-xs")}>
@@ -306,7 +316,7 @@ function SeatBadge({ state, p, compact }: { state: GameState; p: Player; compact
         </span>
       </div>
       {/* Fixed-height row: a growing tile would resize the felt mid-trick. */}
-      {!state.board && (
+      {!state.board && state.gameType !== "RAMI" && (
         <div className={cn("mt-1.5", compact && "h-6 overflow-hidden")}>
           <CapturedArea
             cards={state.captured?.[p.seat] ?? []}
@@ -322,7 +332,7 @@ function SeatBadge({ state, p, compact }: { state: GameState; p: Player; compact
   );
 }
 
-function TurnTimerBar({ deadline, className }: { deadline: number; className?: string }) {
+export function TurnTimerBar({ deadline, className }: { deadline: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -635,7 +645,7 @@ function StopVote({ state, onCastStopVote }: { state: GameState; onCastStopVote:
   );
 }
 
-function PauseVote({ state, onCastPauseVote }: { state: GameState; onCastPauseVote: (pause: boolean) => void }) {
+export function PauseVote({ state, onCastPauseVote }: { state: GameState; onCastPauseVote: (pause: boolean) => void }) {
   const t = useT();
   const vote = state.pauseVote!;
   const voted = vote.youVoted !== null && vote.youVoted !== undefined;
@@ -651,7 +661,7 @@ function PauseVote({ state, onCastPauseVote }: { state: GameState; onCastPauseVo
   );
 }
 
-function PauseOverlay({ endsAtMs, onResume }: { endsAtMs: number; onResume: () => void }) {
+export function PauseOverlay({ endsAtMs, onResume }: { endsAtMs: number; onResume: () => void }) {
   const t = useT();
   const [remaining, setRemaining] = useState(() => Math.max(0, Math.ceil((endsAtMs - Date.now()) / 1000)));
   useEffect(() => {
@@ -678,7 +688,7 @@ function PauseOverlay({ endsAtMs, onResume }: { endsAtMs: number; onResume: () =
   );
 }
 
-function RankingRow({
+export function RankingRow({
   rank,
   name,
   value,
@@ -737,7 +747,7 @@ function RoundIntermission({ state }: { state: GameState }) {
   );
 }
 
-function GameOver({ state, rankedResults }: { state: GameState; rankedResults: RankedMessagesRankedResultEntry[] | null }) {
+export function GameOver({ state, rankedResults }: { state: GameState; rankedResults: RankedMessagesRankedResultEntry[] | null }) {
   const t = useT();
   const standings = state.standings ?? [];
   const eloBySeat = new Map((rankedResults ?? []).map((e) => [e.seat, e]));

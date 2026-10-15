@@ -1,3 +1,6 @@
 allowBuilds:
   sharp: false
   unrs-resolver: false
+# Our own contract package ships with every server release; it must not wait out the release-age delay.
+minimumReleaseAgeExclude:
+  - '@barbu-game/barbu-api'
