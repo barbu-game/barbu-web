@@ -156,7 +156,7 @@ export const en: Record<keyof typeof fr, string> = {
   "ramiRules.opening.title": "First lay-down: 51 points",
   "ramiRules.opening.body": "Your first lay-down must be worth at least 51 points in a single turn. Faces 10, ace 1 (A-2-3) or 11, joker = the card it stands for.",
   "ramiRules.turn.title": "A turn",
-  "ramiRules.turn.body": "Draw from the stock or take the top discard (only to lay it down this turn, never with 2 cards or fewer in hand). Meld or lay off, then discard: every turn ends with a discard.",
+  "ramiRules.turn.body": "Draw from the stock or take the top discard (you may keep it, but never with 2 cards or fewer in hand). Meld or lay off, then discard: every turn ends with a discard.",
   "ramiRules.jokers.title": "Jokers",
   "ramiRules.jokers.body": "Once you have laid down, you may take back a joker on the table by putting the real card in its place; it must be played again the same turn.",
   "ramiRules.end.title": "End of a round",

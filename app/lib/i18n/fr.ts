@@ -154,7 +154,7 @@ export const fr = {
   "ramiRules.opening.title": "Première pose : 51 points",
   "ramiRules.opening.body": "Pour poser la première fois, vos combinaisons doivent valoir au moins 51 points dans le même tour. Figures 10, as 1 (A-2-3) ou 11, joker = la carte qu'il remplace.",
   "ramiRules.turn.title": "Déroulement du tour",
-  "ramiRules.turn.body": "Piochez dans la pioche ou prenez la carte du dessus de la défausse (seulement pour la poser dans ce tour, et jamais avec 2 cartes ou moins en main). Posez ou complétez, puis défaussez : chaque tour finit par une défausse.",
+  "ramiRules.turn.body": "Piochez dans la pioche ou prenez la carte du dessus de la défausse (qu'on peut garder en main, mais jamais avec 2 cartes ou moins). Posez ou complétez, puis défaussez : chaque tour finit par une défausse.",
   "ramiRules.jokers.title": "Jokers",
   "ramiRules.jokers.body": "Après votre première pose, vous pouvez reprendre un joker posé en le remplaçant par la vraie carte ; il doit être rejoué dans le même tour.",
   "ramiRules.end.title": "Fin de manche",
