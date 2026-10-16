@@ -39,7 +39,7 @@ export function Home({
   variants,
   initialCode,
 }: {
-  onCreate: (name: string, playerCount: number, variant: string, gameType: GameType) => void;
+  onCreate: (name: string, playerCount: number, variant: string, gameType: GameType, timer: boolean) => void;
   onJoin: (name: string, code: string) => void;
   onQuickMatch: (name: string, size: number, gameType: GameType) => void;
   onRankedMatch: (name: string, gameType: GameType) => void;
@@ -59,6 +59,7 @@ export function Home({
   const [gameType, setGameType] = useState<GameType>("BARBU");
   const rami = gameType === "RAMI";
   const [ramiCount, setRamiCount] = useState(5);
+  const [ramiTimer, setRamiTimer] = useState(true);
   const tableSize = rami ? ramiCount : playerCount;
   const [showRules, setShowRules] = useState(false);
   const [showRamiRules, setShowRamiRules] = useState(false);
@@ -167,6 +168,18 @@ export function Home({
           )}
         </div>
 
+        {rami && (
+          <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              data-testid="rami-untimed"
+              checked={!ramiTimer}
+              onChange={(e) => setRamiTimer(!e.target.checked)}
+              className="size-4 accent-gold-soft"
+            />
+            {t("home.untimed")}
+          </label>
+        )}
         {rami && <p className="mt-3 text-xs text-muted-fg">{t("home.ramiNote")}</p>}
         <Button
           data-testid="quick-match"
@@ -184,7 +197,7 @@ export function Home({
             variant="ghost"
             onClick={() => {
               remember(name);
-              onCreate(displayName, tableSize, variantId, gameType);
+              onCreate(displayName, tableSize, variantId, gameType, !rami || ramiTimer);
             }}
           >
             {t("home.createTable")}

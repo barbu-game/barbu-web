@@ -88,14 +88,15 @@ export function layOffMove(meld: RamiMeldT, cards: RamiCardT[]): RamiMove | null
 
 export function canSwapJoker(meld: RamiMeldT, card: RamiCardT): boolean {
   const at = meld.cards.findIndex((c) => c.joker);
-  if (at < 0 || card.joker) return false;
+  // A three-card set's joker has no definite suit: it is only taken from a four of a kind.
+  if (at < 0 || card.joker || (meld.kind === "SET" && meld.cards.length < 4)) return false;
   const swapped = meld.cards.map((c, i) => (i === at ? card : c));
   return meldKind(swapped) === meld.kind;
 }
 
 /**
- * Legal moves for tapping `meld` with the selected `cards`. Several when the choice matters: taking a
- * set's joker vs adding the card, or a joker that fits either end of a run.
+ * Legal moves for tapping `meld` with the selected `cards`; several when the cards fit either end
+ * of a run.
  */
 export function meldTapMoves(meld: RamiMeldT, cards: RamiCardT[], handSize: number): RamiMove[] {
   const moves: RamiMove[] = [];
@@ -130,3 +131,42 @@ export function sortRamiHand(hand: RamiCardT[], by: "suit" | "rank"): RamiCardT[
 
 /** Penalty a card costs when left in hand at round end. */
 export const penalty = (c: RamiCardT) => (c.joker ? 25 : rankPoints(c.rank!));
+
+// Mirrors the felt's CSS: pile caption, owner label, meld padding and gaps, in px.
+const PILE_SCALE = 1.2;
+const CAPTION_H = 20;
+const LABEL_H = 17;
+const MELD_PAD = 8;
+const GAP = 8;
+const SECTION_GAP = 12;
+const AREA_PAD = 22;
+export const MELD_STEP = 0.55;
+
+/** Largest table-card width (min..max) at which the piles and every owner's melds fit `area` unscrolled. */
+export function fitMeldWidth(area: { width: number; height: number }, owners: number[][], min = 22, max = 60): number {
+  const w = area.width - AREA_PAD;
+  const h = area.height - AREA_PAD;
+  for (let cw = max; cw > min; cw -= 2) {
+    const cardH = cw * 1.4;
+    const meldH = cardH + MELD_PAD;
+    let total = cw * PILE_SCALE * 1.4 + CAPTION_H;
+    if (cw * PILE_SCALE * 2 + 16 > w) continue;
+    let fits = true;
+    for (const counts of owners) {
+      let rows = 1;
+      let line = 0;
+      for (const n of counts) {
+        const mw = cw + (n - 1) * cw * MELD_STEP + MELD_PAD;
+        if (mw > w) fits = false;
+        if (line > 0 && line + GAP + mw > w) {
+          rows++;
+          line = mw;
+        } else line += (line > 0 ? GAP : 0) + mw;
+      }
+      total += GAP + LABEL_H + GAP + rows * meldH + (rows - 1) * GAP;
+    }
+    if (owners.length) total += SECTION_GAP - GAP;
+    if (fits && total <= h) return cw;
+  }
+  return min;
+}

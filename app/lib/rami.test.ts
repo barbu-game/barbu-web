@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canSwapJoker, layOffMove, meldKind, meldPoints, meldTapMoves, moveCard, openingTotal, sortRamiHand, type RamiCardT } from "./rami";
+import { canSwapJoker, fitMeldWidth, layOffMove, meldKind, meldPoints, meldTapMoves, moveCard, openingTotal, sortRamiHand, type RamiCardT } from "./rami";
 
 let nextId = 0;
 const SUITS: Record<string, string> = { H: "HEARTS", D: "DIAMONDS", C: "CLUBS", S: "SPADES" };
@@ -81,8 +81,10 @@ describe("canSwapJoker", () => {
     expect(canSwapJoker(run, c("7H"))).toBe(true);
     expect(canSwapJoker(run, c("8H"))).toBe(false);
     const set = { id: 3, owner: 0, kind: "SET", cards: cs("7H", "7S", "JK") };
-    expect(canSwapJoker(set, c("7D"))).toBe(true);
-    expect(canSwapJoker(set, c("7H"))).toBe(false);
+    expect(canSwapJoker(set, c("7D"))).toBe(false);
+    const four = { id: 4, owner: 0, kind: "SET", cards: cs("7H", "7S", "JK", "7D") };
+    expect(canSwapJoker(four, c("7C"))).toBe(true);
+    expect(canSwapJoker(four, c("7H"))).toBe(false);
     expect(canSwapJoker({ id: 5, owner: 0, kind: "RUN", cards: cs("5H", "6H", "7H") }, c("8H"))).toBe(false);
   });
 });
@@ -100,13 +102,10 @@ describe("sortRamiHand", () => {
 });
 
 describe("meldTapMoves", () => {
-  it("offers both the swap and the lay-off when a set's joker could also take a fourth card", () => {
+  it("offers only the lay-off on a three-card set with a joker", () => {
     const set = { id: 3, owner: 0, kind: "SET", cards: cs("7H", "7S", "JK") };
     const diamond = c("7D");
-    expect(meldTapMoves(set, [diamond], 5)).toEqual([
-      { kind: "swapJoker", meldId: 3, cardId: diamond.id },
-      { kind: "layoff", meldId: 3, before: [], after: [diamond.id] },
-    ]);
+    expect(meldTapMoves(set, [diamond], 5)).toEqual([{ kind: "layoff", meldId: 3, before: [], after: [diamond.id] }]);
   });
 
   it("offers only the lay-off for a run, and nothing that would empty the hand", () => {
@@ -135,5 +134,22 @@ describe("moveCard", () => {
     expect(moveCard([1, 2, 3, 4], 4, 0)).toEqual([4, 1, 2, 3]);
     expect(moveCard([1, 2, 3], 2, 9)).toEqual([1, 3, 2]);
     expect(moveCard([1, 2, 3], 7, 0)).toEqual([1, 2, 3]);
+  });
+});
+
+describe("fitMeldWidth", () => {
+  it("uses the largest size when there is room", () => {
+    expect(fitMeldWidth({ width: 430, height: 680 }, [[3, 3], [4, 3]])).toBe(60);
+  });
+  it("shrinks as melds pile up and never goes below the minimum", () => {
+    const five = Array.from({ length: 5 }, () => [4, 3, 3, 5]);
+    const cw = fitMeldWidth({ width: 430, height: 680 }, five);
+    expect(cw).toBeLessThan(60);
+    expect(cw).toBeGreaterThan(22);
+    expect(fitMeldWidth({ width: 200, height: 120 }, five)).toBe(22);
+  });
+  it("keeps the piles inside a short area", () => {
+    expect(fitMeldWidth({ width: 900, height: 110 }, [])).toBeLessThanOrEqual(60);
+    expect(fitMeldWidth({ width: 900, height: 110 }, []) * 1.2 * 1.4 + 20).toBeLessThanOrEqual(94);
   });
 });
