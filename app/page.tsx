@@ -157,8 +157,8 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
       <Home
         onCreate={game.createRoom}
         onJoin={game.join}
-        onQuickMatch={game.quickMatch}
-        onRankedMatch={(name) => game.quickMatch(name, 4, true)}
+        onQuickMatch={(name, size, gameType) => game.quickMatch(name, size, false, gameType)}
+        onRankedMatch={(name, gameType) => game.quickMatch(name, 4, true, gameType)}
         isLoggedIn={auth !== null}
         username={auth?.username ?? null}
         error={game.error}
@@ -187,6 +187,7 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
         error={game.error}
         onPlay={game.play}
         onCastPauseVote={game.castPauseVote}
+        onCastStopVote={game.castStopVote}
         onResume={game.resumeGame}
       />
     );

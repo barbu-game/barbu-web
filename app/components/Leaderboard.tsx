@@ -15,20 +15,27 @@ export default function LeaderboardButton() {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<RatingServiceLeaderboardRow[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [game, setGame] = useState<"BARBU" | "RAMI">("BARBU");
 
   useEffect(() => {
     if (!open) return;
-    fetch(`${API}/leaderboard?limit=20`)
+    // A slower answer for the previous tab must not overwrite the current one.
+    let live = true;
+    fetch(`${API}/leaderboard?limit=20&game=${game}`)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
       .then((data: RatingServiceLeaderboardRow[]) => {
+        if (!live) return;
         setRows(data);
         setFailed(false);
       })
-      .catch(() => setFailed(true));
-  }, [open]);
+      .catch(() => live && setFailed(true));
+    return () => {
+      live = false;
+    };
+  }, [open, game]);
 
   return (
     <>
@@ -37,6 +44,27 @@ export default function LeaderboardButton() {
       </IconButton>
       <Dialog open={open} onOpenChange={setOpen} title={t("leaderboard.title")}>
         <div className="p-3">
+          <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface-2 p-1" role="tablist">
+            {(["BARBU", "RAMI"] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                role="tab"
+                aria-selected={game === g}
+                data-testid={`leaderboard-${g.toLowerCase()}`}
+                onClick={() => {
+                  setRows(null);
+                  setGame(g);
+                }}
+                className={cn(
+                  "h-8 rounded-md text-sm font-medium transition-colors",
+                  game === g ? "bg-surface text-foreground shadow-sm" : "text-muted-fg hover:text-foreground",
+                )}
+              >
+                {t(g === "BARBU" ? "game.barbu" : "game.rami")}
+              </button>
+            ))}
+          </div>
           {failed ? (
             <p className="p-4 text-center text-sm text-muted-fg">{t("leaderboard.unavailable")}</p>
           ) : rows === null ? (

@@ -8,6 +8,7 @@ import { buildPodWsUrl } from "./redirect";
 import { gameWsUrl } from "./wsUrl";
 
 type Status = "idle" | "connecting" | "open" | "closed";
+export type GameType = "BARBU" | "RAMI";
 
 export function useGameSocket() {
   const wsRef = useRef<WebSocket | null>(null);
@@ -21,7 +22,7 @@ export function useGameSocket() {
   // Intentional close (redirect/matched): a handler-driven handoff, not an unwanted drop to re-enqueue.
   const intentionalCloseRef = useRef(false);
   // Last matchmaking request + guards: re-enqueue ONCE if the socket drops mid-search.
-  const lastEnqueueRef = useRef<{ name: string; size: number; ranked: boolean } | null>(null);
+  const lastEnqueueRef = useRef<{ name: string; size: number; ranked: boolean; gameType: GameType } | null>(null);
   const searchingRef = useRef(false);
   const requeuedRef = useRef(false);
   const [state, setState] = useState<GameState | null>(null);
@@ -62,10 +63,12 @@ export function useGameSocket() {
       if (searchingRef.current && lastEnqueueRef.current && !requeuedRef.current) {
         // Unwanted drop mid-search: one re-register attempt onto a surviving pod, then give up (no loop if the server is down).
         requeuedRef.current = true;
-        const { name, size, ranked } = lastEnqueueRef.current;
+        const { name, size, ranked, gameType } = lastEnqueueRef.current;
         urlRef.current = null;
         setTimeout(() => {
-          connectRef.current(() => send({ type: "enqueueMatchmaking", name, size, ranked, token: tokenRef.current }));
+          connectRef.current(() =>
+            send({ type: "enqueueMatchmaking", name, size, ranked, gameType, token: tokenRef.current }),
+          );
         }, 1000);
       } else {
         setSearching(false);
@@ -150,7 +153,7 @@ export function useGameSocket() {
   }, []);
 
   const createRoom = useCallback(
-    (name: string, playerCount: number, variant: string, gameType: "BARBU" | "RAMI" = "BARBU") =>
+    (name: string, playerCount: number, variant: string, gameType: GameType = "BARBU") =>
       ensureSocket(() => send({ type: "createRoom", name, playerCount, variant, gameType, token: tokenRef.current })),
     [ensureSocket, send],
   );
@@ -162,12 +165,12 @@ export function useGameSocket() {
   );
 
   const quickMatch = useCallback(
-    (name: string, size: number, ranked = false) => {
-      lastEnqueueRef.current = { name, size, ranked };
+    (name: string, size: number, ranked = false, gameType: GameType = "BARBU") => {
+      lastEnqueueRef.current = { name, size, ranked, gameType };
       requeuedRef.current = false;
       searchingRef.current = true;
       setSearching(true);
-      ensureSocket(() => send({ type: "enqueueMatchmaking", name, size, ranked, token: tokenRef.current }));
+      ensureSocket(() => send({ type: "enqueueMatchmaking", name, size, ranked, gameType, token: tokenRef.current }));
     },
     [ensureSocket, send],
   );

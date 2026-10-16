@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { Bot, Check, Copy, Crown, Link2, LogOut } from "lucide-react";
 import type { GameState } from "../lib/game";
 import type { Variant } from "../lib/variants";
+import type { GameType } from "../lib/useGameSocket";
 import { loadGuestName, saveGuestName } from "../lib/guest";
 import { useT } from "../lib/i18n";
 import { cn } from "../lib/cn";
 import Button from "../ui/Button";
 import Dialog from "../ui/Dialog";
 import VariantRules from "./VariantRules";
+import RamiRules from "./RamiRules";
 
 const FIELD =
   "h-11 w-full rounded-lg border border-border bg-surface-2 px-3 text-[15px] text-foreground outline-none transition-colors placeholder:text-muted-fg/70 focus:border-gold-soft/60";
@@ -37,10 +39,10 @@ export function Home({
   variants,
   initialCode,
 }: {
-  onCreate: (name: string, playerCount: number, variant: string, gameType: "BARBU" | "RAMI") => void;
+  onCreate: (name: string, playerCount: number, variant: string, gameType: GameType) => void;
   onJoin: (name: string, code: string) => void;
-  onQuickMatch: (name: string, size: number) => void;
-  onRankedMatch: (name: string) => void;
+  onQuickMatch: (name: string, size: number, gameType: GameType) => void;
+  onRankedMatch: (name: string, gameType: GameType) => void;
   isLoggedIn: boolean;
   username: string | null;
   error: string | null;
@@ -54,11 +56,12 @@ export function Home({
   // An invite link lands here as /?join=CODE (passed in via searchParams) — seed the join box.
   const [code, setCode] = useState(initialCode);
   const [variantId, setVariantId] = useState("developer");
-  const [gameType, setGameType] = useState<"BARBU" | "RAMI">("BARBU");
+  const [gameType, setGameType] = useState<GameType>("BARBU");
   const rami = gameType === "RAMI";
   const [ramiCount, setRamiCount] = useState(5);
   const tableSize = rami ? ramiCount : playerCount;
   const [showRules, setShowRules] = useState(false);
+  const [showRamiRules, setShowRamiRules] = useState(false);
 
   // A signed-in player carries their account pseudo — no name to pick.
   const displayName = username ?? (name.trim() || "Player");
@@ -91,7 +94,19 @@ export function Home({
           />
         )}
 
-        <label className={cn(LABEL, "mt-4")}>{t("home.game")}</label>
+        <div className="mb-1.5 mt-4 flex items-baseline justify-between">
+          <label className="text-xs font-medium text-muted-fg">{t("home.game")}</label>
+          {rami && (
+            <button
+              type="button"
+              data-testid="rami-rules-link"
+              onClick={() => setShowRamiRules(true)}
+              className="text-xs text-gold-soft hover:underline"
+            >
+              {t("home.rules")}
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface-2 p-1" role="radiogroup">
           {(["BARBU", "RAMI"] as const).map((g) => (
             <button
@@ -152,28 +167,13 @@ export function Home({
           )}
         </div>
 
-        {rami ? (
-          <>
-            <p className="mt-3 text-xs text-muted-fg">{t("home.ramiNote")}</p>
-            <Button
-              data-testid="create-table"
-              className="mt-4 w-full"
-              onClick={() => {
-                remember(name);
-                onCreate(displayName, tableSize, variantId, "RAMI");
-              }}
-            >
-              {t("home.createTable")}
-            </Button>
-          </>
-        ) : (
-          <>
+        {rami && <p className="mt-3 text-xs text-muted-fg">{t("home.ramiNote")}</p>}
         <Button
           data-testid="quick-match"
           className="mt-5 w-full"
           onClick={() => {
             remember(name);
-            onQuickMatch(displayName, playerCount);
+            onQuickMatch(displayName, tableSize, gameType);
           }}
         >
           {t("home.quickMatch")}
@@ -184,20 +184,18 @@ export function Home({
             variant="ghost"
             onClick={() => {
               remember(name);
-              onCreate(displayName, playerCount, variantId, "BARBU");
+              onCreate(displayName, tableSize, variantId, gameType);
             }}
           >
             {t("home.createTable")}
           </Button>
           {isLoggedIn && (
-            <Button data-testid="ranked-match" variant="ghost" onClick={() => onRankedMatch(displayName)}>
+            <Button data-testid="ranked-match" variant="ghost" onClick={() => onRankedMatch(displayName, gameType)}>
               {t("home.ranked")}
             </Button>
           )}
         </div>
         {!isLoggedIn && <p className="mt-2 text-center text-xs text-muted-fg">{t("home.loginForRanked")}</p>}
-          </>
-        )}
 
         <div className="my-5 h-px bg-border" />
 
@@ -233,6 +231,9 @@ export function Home({
         )}
       </div>
 
+      <Dialog open={showRamiRules} onOpenChange={setShowRamiRules} title={t("game.rami")}>
+        <RamiRules />
+      </Dialog>
       {selectedVariant && (
         <Dialog open={showRules} onOpenChange={setShowRules} title={selectedVariant.name}>
           <VariantRules variant={selectedVariant} />

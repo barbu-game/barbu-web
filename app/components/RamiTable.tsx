@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { GameState } from "../lib/game";
 import {
   meldKind,
   meldTapMoves,
+  moveCard,
   openingTotal,
   OPENING_MIN,
   penalty,
@@ -30,6 +31,7 @@ import {
   Overlay,
   PauseOverlay,
   PauseVote,
+  StopVote,
   RankingRow,
   SeatsAround,
   TurnTimerBar,
@@ -42,12 +44,14 @@ export default function RamiTable({
   error,
   onPlay,
   onCastPauseVote,
+  onCastStopVote,
   onResume,
 }: {
   state: GameState;
   error: string | null;
   onPlay: (move: RamiMove) => void;
   onCastPauseVote: (pause: boolean) => void;
+  onCastStopVote: (stop: boolean) => void;
   onResume: () => void;
 }) {
   const t = useT();
@@ -61,7 +65,8 @@ export default function RamiTable({
 
   const [selected, setSelected] = useState<number[]>([]);
   const [draft, setDraft] = useState<number[][]>([]);
-  const [sortBy, setSortBy] = useState<"suit" | "rank">("suit");
+  const [sortBy, setSortBy] = useState<"suit" | "rank" | "manual">("suit");
+  const [manual, setManual] = useState<number[]>([]);
   const [dismissed, setDismissed] = useState<string | null>(null);
   const [choice, setChoice] = useState<RamiMove[] | null>(null);
   // A message dismissed once must show again if it comes back after a fresh state cleared it.
@@ -84,14 +89,29 @@ export default function RamiTable({
   const selCards = sel.map((id) => byId.get(id)!);
   const groupCards = groups.map((g) => g.map((id) => byId.get(id)!));
   const draftTotal = openingTotal(groupCards);
+  const inHand = hand.filter((c) => !inDraft.has(c.id));
+  // Manual order keeps the player's arrangement; cards drawn since then go to the right.
+  const shown =
+    sortBy === "manual"
+      ? [
+          ...manual.map((id) => inHand.find((c) => c.id === id)).filter((c): c is RamiCardT => c !== undefined),
+          ...sortRamiHand(inHand.filter((c) => !manual.includes(c.id)), "suit"),
+        ]
+      : sortRamiHand(inHand, sortBy);
 
+  // Selection and draft survive a rejected move: played cards drop out of them on the next state.
   const send = (move: RamiMove) => {
-    setSelected([]);
     setChoice(null);
-    if (move.kind !== "layoff" && move.kind !== "swapJoker") setDraft([]);
+    if (move.kind === "reset") {
+      setSelected([]);
+      setDraft([]);
+    }
     onPlay(move);
   };
-  const toggle = (id: number) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s.filter((x) => byId.has(x)), id]));
+  const toggle = (id: number) => {
+    setChoice(null);
+    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s.filter((x) => byId.has(x)), id]));
+  };
   const keepsACard = (n: number) => n < hand.length;
 
   const onMeldClick = (meld: RamiMeldT) => {
@@ -128,6 +148,7 @@ export default function RamiTable({
         />
 
         <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex flex-col items-center gap-2 px-3">
+          {state.stopVote?.open && <StopVote state={state} onCastStopVote={onCastStopVote} />}
           {state.pauseVote?.open && <PauseVote state={state} onCastPauseVote={onCastPauseVote} />}
           {showError && (
             <button
@@ -166,14 +187,14 @@ export default function RamiTable({
           </span>
           {hint && <span className="order-last w-full truncate text-xs text-muted-fg sm:order-none sm:w-auto">{hint}</span>}
           <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-fg">
-            {(["suit", "rank"] as const).map((k) => (
+            {(["suit", "rank", "manual"] as const).map((k) => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setSortBy(k)}
                 className={cn("rounded px-1.5 py-0.5", sortBy === k ? "bg-surface-2 text-foreground" : "hover:text-foreground")}
               >
-                {t(k === "suit" ? "rami.sortSuit" : "rami.sortRank")}
+                {t(k === "suit" ? "rami.sortSuit" : k === "rank" ? "rami.sortRank" : "rami.sortManual")}
               </button>
             ))}
             <span className="ml-2 text-sm font-semibold tabular-nums text-foreground" title={t("table.total")}>
@@ -202,12 +223,26 @@ export default function RamiTable({
             )}
             {turnPhase === "PLAY" && choice && (
               <>
-                <Button data-testid="rami-choose-swap" size="sm" onClick={() => send(choice[0])}>
-                  {t("rami.swapJoker")}
-                </Button>
-                <Button data-testid="rami-choose-layoff" size="sm" variant="ghost" onClick={() => send(choice[1])}>
-                  {t("rami.layOff")}
-                </Button>
+                {choice.map((move, i, all) => {
+                  const bothEnds = all.filter((m) => m.kind === "layoff").length > 1;
+                  return (
+                  <Button
+                    key={i}
+                    data-testid={`rami-choose-${move.kind === "swapJoker" ? "swap" : move.kind === "layoff" && move.before.length ? "start" : "end"}`}
+                    size="sm"
+                    variant={i === 0 ? undefined : "ghost"}
+                    onClick={() => send(move)}
+                  >
+                    {move.kind === "swapJoker"
+                      ? t("rami.swapJoker")
+                      : !bothEnds
+                        ? t("rami.layOff")
+                        : move.kind === "layoff" && move.before.length
+                          ? t("rami.layOffStart")
+                          : t("rami.layOffEnd")}
+                  </Button>
+                  );
+                })}
                 <Button size="sm" variant="ghost" onClick={() => setChoice(null)}>
                   <X size={14} />
                 </Button>
@@ -285,7 +320,11 @@ export default function RamiTable({
         )}
 
         <Hand
-          hand={sortRamiHand(hand.filter((c) => !inDraft.has(c.id)), sortBy)}
+          hand={shown}
+          onReorder={(id, to) => {
+            setManual(moveCard(shown.map((c) => c.id), id, to));
+            setSortBy("manual");
+          }}
           selectable={turnPhase === "PLAY"}
           selected={sel}
           highlighted={mustPlay}
@@ -458,20 +497,27 @@ function MiniRow({ cards, width }: { cards: RamiCardT[]; width: number }) {
   );
 }
 
+const DRAG_THRESHOLD = 6;
+
 function Hand({
   hand,
   selectable,
   selected,
   highlighted,
   onToggle,
+  onReorder,
 }: {
   hand: RamiCardT[];
   selectable: boolean;
   selected: number[];
   highlighted: Set<number>;
   onToggle: (id: number) => void;
+  onReorder: (id: number, toIndex: number) => void;
 }) {
   const [ref, size] = useElementSize<HTMLDivElement>();
+  const [drag, setDrag] = useState<{ id: number; index: number; startX: number; dx: number } | null>(null);
+  // A drag ends with a click on the card; that click must not toggle the selection.
+  const justDragged = useRef(false);
   const narrow = size.width > 0 && size.width < NARROW_FELT;
   const cw = Math.round(narrow ? clamp(size.width / 6.4, 50, 64) : clamp(size.width / 12, 64, 84));
   const ch = cw * CARD_RATIO;
@@ -484,7 +530,29 @@ function Hand({
   const height = ch + (reservedRows - 1) * rowOffset + lift;
 
   return (
-    <div ref={ref} className="relative" style={{ height: size.width ? height : ch + lift }}>
+    <div
+      ref={ref}
+      className="relative"
+      style={{ height: size.width ? height : ch + lift }}
+      onPointerMove={(e) => {
+        if (!drag) return;
+        const dx = e.clientX - drag.startX;
+        // Capture only once it is a drag: a captured tap would send its click here, not to the card.
+        if (Math.abs(dx) > DRAG_THRESHOLD && !e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }
+        setDrag({ ...drag, dx });
+      }}
+      onPointerUp={() => {
+        if (drag && Math.abs(drag.dx) > DRAG_THRESHOLD) {
+          justDragged.current = true;
+          setTimeout(() => (justDragged.current = false), 0);
+          onReorder(drag.id, drag.index + Math.round(drag.dx / Math.max(fan.step, 1)));
+        }
+        setDrag(null);
+      }}
+      onPointerCancel={() => setDrag(null)}
+    >
       {size.width > 0 &&
         hand.map((card, i) => {
           const row = fan.rows === 2 && i >= fan.perRow ? 1 : 0;
@@ -492,18 +560,23 @@ function Hand({
           const rowCount = row ? hand.length - fan.perRow : Math.min(fan.perRow, hand.length);
           const rowWidth = cw + (rowCount - 1) * fan.step;
           const isSelected = selected.includes(card.id);
+          const dragging = drag?.id === card.id && Math.abs(drag.dx) > DRAG_THRESHOLD;
           return (
             <div
               key={card.id}
               data-testid="rami-hand-card"
               data-card-id={card.id}
               data-penalty={penalty(card)}
-              className="absolute transition-[left,top] duration-200 ease-out hover:z-50 motion-reduce:transition-none"
+              className={cn(
+                "absolute touch-none hover:z-50",
+                dragging ? "z-[60] cursor-grabbing" : "transition-[left,top] duration-200 ease-out motion-reduce:transition-none",
+              )}
               style={{
-                left: (size.width - rowWidth) / 2 + inRow * fan.step,
+                left: (size.width - rowWidth) / 2 + inRow * fan.step + (dragging ? drag.dx : 0),
                 top: lift + (fan.rows === 2 ? row * rowOffset : ((reservedRows - 1) * rowOffset) / 2),
-                zIndex: i + 1,
+                zIndex: dragging ? 60 : i + 1,
               }}
+              onPointerDown={(e) => setDrag({ id: card.id, index: i, startX: e.clientX, dx: 0 })}
             >
               <Card
                 card={card}
@@ -511,7 +584,8 @@ function Hand({
                 playable={selectable}
                 raised={isSelected}
                 highlight={isSelected || highlighted.has(card.id)}
-                onClick={selectable ? () => onToggle(card.id) : undefined}
+                onClick={selectable ? () => !justDragged.current && onToggle(card.id) : undefined}
+                className="disabled:pointer-events-none"
               />
             </div>
           );

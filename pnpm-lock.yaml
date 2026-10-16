@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@barbu-game/barbu-api':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: ^0.4.0
+        version: 0.4.0
       '@radix-ui/react-dialog':
         specifier: ^1.1.19
         version: 1.1.19(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -143,8 +143,8 @@ packages:
     resolution: {integrity: sha512-4zBIxpPzowiZpusoFkyGVwakdRJUyuH5PxQ/PrqghfdFWWasvnCdPfQXHrenDai+gyLARulZjZowCOj6fjT4pA==}
     engines: {node: '>=6.9.0'}
 
-  '@barbu-game/barbu-api@0.3.0':
-    resolution: {integrity: sha512-+OpqSWvp0nLdyCshSWoNa8HoU+/dExbt6ovyrZBvGWI4JkhoI3tOV3NDfat01ASCB7AYTaxohxukIfHynXrzcQ==, tarball: https://npm.pkg.github.com/download/@barbu-game/barbu-api/0.3.0/c9681aabcf2a4b1a1584e113f437529ef0220a44}
+  '@barbu-game/barbu-api@0.4.0':
+    resolution: {integrity: sha512-kvI7LUht0AfTRcZlpHZwjXesCiOU+wkoseWXRMDlkyw4LCdQ8hI+TYfbRg6uAdGY7PaZJ/+BdV92OcKH78Mu9Q==, tarball: https://npm.pkg.github.com/download/@barbu-game/barbu-api/0.4.0/91d94dd384f72f010b49b0abb2316f526e283796}
 
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
@@ -2701,7 +2701,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@barbu-game/barbu-api@0.3.0': {}
+  '@barbu-game/barbu-api@0.4.0': {}
 
   '@emnapi/core@1.10.0':
     dependencies:
