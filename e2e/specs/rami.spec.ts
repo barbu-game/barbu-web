@@ -133,3 +133,27 @@ test("on a narrow phone a card can be dragged to the hand's second row", async (
   await page.mouse.up();
   await expect(cards.last()).toHaveAttribute("data-card-id", firstId!);
 });
+
+test("a chime plays when the turn comes to us", async ({ page }) => {
+  test.setTimeout(60_000);
+  // Count synthesized notes: the card sound uses noise buffers, only the turn chime uses oscillators.
+  await page.addInitScript(() => {
+    const w = window as unknown as { chimes: number };
+    w.chimes = 0;
+    const original = AudioContext.prototype.createOscillator;
+    AudioContext.prototype.createOscillator = function (this: AudioContext) {
+      w.chimes++;
+      return original.call(this);
+    };
+  });
+  const home = new HomePage(page);
+  await home.goto();
+  await home.setName("E2E-Chime");
+  await page.getByTestId("game-rami").click();
+  await home.createTable();
+  const lobby = new LobbyPage(page);
+  await lobby.addBotUntilFull();
+  await lobby.start();
+  await expect(page.getByTestId("rami-draw").or(page.getByTestId("rami-discard")).first()).toBeVisible({ timeout: 30_000 });
+  await expect.poll(() => page.evaluate(() => (window as unknown as { chimes: number }).chimes)).toBeGreaterThan(0);
+});
