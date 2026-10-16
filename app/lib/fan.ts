@@ -13,3 +13,17 @@ export function fanLayout(count: number, cardWidth: number, available: number, m
   const perRow = Math.ceil(count / 2);
   return { rows: 2, perRow, step: Math.max(0, fit(perRow)) };
 }
+
+/** Slot under (`x`, `y`) in a hand laid out by {@link fanLayout}, measured from the hand's top-left. */
+export function fanIndexAt(
+  x: number,
+  y: number,
+  fan: Fan,
+  geo: { count: number; cardWidth: number; width: number; top: number; rowOffset: number },
+): number {
+  const row = fan.rows === 2 && y >= geo.top + geo.rowOffset ? 1 : 0;
+  const rowCount = row ? geo.count - fan.perRow : Math.min(fan.perRow, geo.count);
+  const left = (geo.width - (geo.cardWidth + (rowCount - 1) * fan.step)) / 2;
+  const inRow = fan.step > 0 ? Math.floor((x - left) / fan.step) : 0;
+  return row * fan.perRow + Math.max(0, Math.min(rowCount - 1, inRow));
+}

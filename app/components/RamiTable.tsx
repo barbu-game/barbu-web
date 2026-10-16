@@ -17,7 +17,7 @@ import {
 } from "../lib/rami";
 import { useT } from "../lib/i18n";
 import { cn } from "../lib/cn";
-import { fanLayout } from "../lib/fan";
+import { fanIndexAt, fanLayout } from "../lib/fan";
 import { useElementSize } from "../lib/useElementSize";
 import Card, { CARD_RATIO } from "../ui/Card";
 import Button from "../ui/Button";
@@ -515,7 +515,8 @@ function Hand({
   onReorder: (id: number, toIndex: number) => void;
 }) {
   const [ref, size] = useElementSize<HTMLDivElement>();
-  const [drag, setDrag] = useState<{ id: number; index: number; startX: number; dx: number } | null>(null);
+  const [drag, setDrag] = useState<{ id: number; startX: number; startY: number; dx: number; dy: number } | null>(null);
+  const moved = (d: { dx: number; dy: number }) => Math.hypot(d.dx, d.dy) > DRAG_THRESHOLD;
   // A drag ends with a click on the card; that click must not toggle the selection.
   const justDragged = useRef(false);
   const narrow = size.width > 0 && size.width < NARROW_FELT;
@@ -536,18 +537,20 @@ function Hand({
       style={{ height: size.width ? height : ch + lift }}
       onPointerMove={(e) => {
         if (!drag) return;
-        const dx = e.clientX - drag.startX;
+        const next = { ...drag, dx: e.clientX - drag.startX, dy: e.clientY - drag.startY };
         // Capture only once it is a drag: a captured tap would send its click here, not to the card.
-        if (Math.abs(dx) > DRAG_THRESHOLD && !e.currentTarget.hasPointerCapture(e.pointerId)) {
+        if (moved(next) && !e.currentTarget.hasPointerCapture(e.pointerId)) {
           e.currentTarget.setPointerCapture(e.pointerId);
         }
-        setDrag({ ...drag, dx });
+        setDrag(next);
       }}
-      onPointerUp={() => {
-        if (drag && Math.abs(drag.dx) > DRAG_THRESHOLD) {
+      onPointerUp={(e) => {
+        if (drag && moved(drag)) {
           justDragged.current = true;
           setTimeout(() => (justDragged.current = false), 0);
-          onReorder(drag.id, drag.index + Math.round(drag.dx / Math.max(fan.step, 1)));
+          const box = e.currentTarget.getBoundingClientRect();
+          const geo = { count: hand.length, cardWidth: cw, width: size.width, top: lift, rowOffset };
+          onReorder(drag.id, fanIndexAt(e.clientX - box.left, e.clientY - box.top, fan, geo));
         }
         setDrag(null);
       }}
@@ -560,7 +563,7 @@ function Hand({
           const rowCount = row ? hand.length - fan.perRow : Math.min(fan.perRow, hand.length);
           const rowWidth = cw + (rowCount - 1) * fan.step;
           const isSelected = selected.includes(card.id);
-          const dragging = drag?.id === card.id && Math.abs(drag.dx) > DRAG_THRESHOLD;
+          const dragging = drag?.id === card.id && moved(drag);
           return (
             <div
               key={card.id}
@@ -573,10 +576,10 @@ function Hand({
               )}
               style={{
                 left: (size.width - rowWidth) / 2 + inRow * fan.step + (dragging ? drag.dx : 0),
-                top: lift + (fan.rows === 2 ? row * rowOffset : ((reservedRows - 1) * rowOffset) / 2),
+                top: lift + (fan.rows === 2 ? row * rowOffset : ((reservedRows - 1) * rowOffset) / 2) + (dragging ? drag.dy : 0),
                 zIndex: dragging ? 60 : i + 1,
               }}
-              onPointerDown={(e) => setDrag({ id: card.id, index: i, startX: e.clientX, dx: 0 })}
+              onPointerDown={(e) => setDrag({ id: card.id, startX: e.clientX, startY: e.clientY, dx: 0, dy: 0 })}
             >
               <Card
                 card={card}
