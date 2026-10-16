@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canSwapJoker, layOffMove, meldKind, meldPoints, meldTapMoves, openingTotal, sortRamiHand, type RamiCardT } from "./rami";
+import { canSwapJoker, layOffMove, meldKind, meldPoints, meldTapMoves, moveCard, openingTotal, sortRamiHand, type RamiCardT } from "./rami";
 
 let nextId = 0;
 const SUITS: Record<string, string> = { H: "HEARTS", D: "DIAMONDS", C: "CLUBS", S: "SPADES" };
@@ -115,5 +115,25 @@ describe("meldTapMoves", () => {
     expect(meldTapMoves(run, [eight], 3)).toEqual([{ kind: "layoff", meldId: 4, before: [], after: [eight.id] }]);
     expect(meldTapMoves(run, [eight], 1)).toEqual([]);
     expect(meldTapMoves(run, cs("9S"), 3)).toEqual([]);
+  });
+});
+
+describe("meldTapMoves at both ends", () => {
+  it("offers the start and the end when a joker fits either side of a run", () => {
+    const run = { id: 6, owner: 0, kind: "RUN", cards: cs("5H", "6H", "7H") };
+    const joker = c("JK");
+    expect(meldTapMoves(run, [joker], 4)).toEqual([
+      { kind: "layoff", meldId: 6, before: [], after: [joker.id] },
+      { kind: "layoff", meldId: 6, before: [joker.id], after: [] },
+    ]);
+  });
+});
+
+describe("moveCard", () => {
+  it("moves a card to a new position in the manual order", () => {
+    expect(moveCard([1, 2, 3, 4], 1, 2)).toEqual([2, 3, 1, 4]);
+    expect(moveCard([1, 2, 3, 4], 4, 0)).toEqual([4, 1, 2, 3]);
+    expect(moveCard([1, 2, 3], 2, 9)).toEqual([1, 3, 2]);
+    expect(moveCard([1, 2, 3], 7, 0)).toEqual([1, 2, 3]);
   });
 });

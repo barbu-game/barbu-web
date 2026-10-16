@@ -93,13 +93,29 @@ export function canSwapJoker(meld: RamiMeldT, card: RamiCardT): boolean {
   return meldKind(swapped) === meld.kind;
 }
 
-/** Legal moves for tapping `meld` with the selected `cards`; two when a set's joker could also take the card. */
+/**
+ * Legal moves for tapping `meld` with the selected `cards`. Several when the choice matters: taking a
+ * set's joker vs adding the card, or a joker that fits either end of a run.
+ */
 export function meldTapMoves(meld: RamiMeldT, cards: RamiCardT[], handSize: number): RamiMove[] {
   const moves: RamiMove[] = [];
   if (cards.length === 1 && canSwapJoker(meld, cards[0])) moves.push({ kind: "swapJoker", meldId: meld.id, cardId: cards[0].id });
-  const layOff = layOffMove(meld, cards);
-  if (layOff && cards.length < handSize) moves.push(layOff);
+  if (cards.length >= handSize) return moves;
+  const ids = cards.map((c) => c.id);
+  const after = meldKind([...meld.cards, ...cards]) === meld.kind;
+  const before = meldKind([...cards, ...meld.cards]) === meld.kind;
+  if (after) moves.push({ kind: "layoff", meldId: meld.id, before: [], after: ids });
+  // A set has no order, so both ends are the same move.
+  if (before && !(after && meld.kind === "SET")) moves.push({ kind: "layoff", meldId: meld.id, before: ids, after: [] });
   return moves;
+}
+
+/** The manual hand order with `id` moved to `toIndex` (clamped); unknown ids leave it unchanged. */
+export function moveCard(order: number[], id: number, toIndex: number): number[] {
+  if (!order.includes(id)) return [...order];
+  const rest = order.filter((x) => x !== id);
+  const at = Math.max(0, Math.min(toIndex, rest.length));
+  return [...rest.slice(0, at), id, ...rest.slice(at)];
 }
 
 const SUIT_ORDER = ["SPADES", "HEARTS", "CLUBS", "DIAMONDS"];

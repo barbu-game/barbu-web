@@ -29,6 +29,7 @@ import Dialog from "../ui/Dialog";
 import IconButton from "../ui/IconButton";
 import CapturedArea from "./CapturedArea";
 import VariantRules from "./VariantRules";
+import RamiRules from "./RamiRules";
 
 type T = ReturnType<typeof useT>;
 type Player = GameState["players"][number];
@@ -107,15 +108,16 @@ export function GameHeaderInfo({ state }: { state: GameState }) {
 export function RulesButton({ state, variants }: { state: GameState; variants: Variant[] }) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  const rami = state.gameType === "RAMI";
   const variant = variants.find((v) => v.id === state.variant?.id);
-  if (!variant) return null;
+  if (!rami && !variant) return null;
   return (
     <>
       <IconButton label={t("home.rules")} onClick={() => setOpen(true)}>
         <BookOpen size={18} />
       </IconButton>
-      <Dialog open={open} onOpenChange={setOpen} title={variant.name}>
-        <VariantRules variant={variant} />
+      <Dialog open={open} onOpenChange={setOpen} title={rami ? t("game.rami") : variant!.name}>
+        {rami ? <RamiRules /> : <VariantRules variant={variant!} />}
       </Dialog>
     </>
   );
@@ -629,7 +631,7 @@ function VoteCard({ title, count, children, voted }: { title: string; count: str
   );
 }
 
-function StopVote({ state, onCastStopVote }: { state: GameState; onCastStopVote: (stop: boolean) => void }) {
+export function StopVote({ state, onCastStopVote }: { state: GameState; onCastStopVote: (stop: boolean) => void }) {
   const t = useT();
   const vote = state.stopVote!;
   const voted = vote.youVoted !== null && vote.youVoted !== undefined;
