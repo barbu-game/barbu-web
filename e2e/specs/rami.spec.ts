@@ -157,3 +157,30 @@ test("a chime plays when the turn comes to us", async ({ page }) => {
   await expect(page.getByTestId("rami-draw").or(page.getByTestId("rami-discard")).first()).toBeVisible({ timeout: 30_000 });
   await expect.poll(() => page.evaluate(() => (window as unknown as { chimes: number }).chimes)).toBeGreaterThan(0);
 });
+
+test("the card taken from the discard pile can be kept in hand", async ({ page }) => {
+  test.setTimeout(90_000);
+  const home = new HomePage(page);
+  await home.goto();
+  await home.setName("E2E-Rami-Keep");
+  await page.getByTestId("game-rami").click();
+  await home.createTable();
+  const lobby = new LobbyPage(page);
+  await lobby.addBotUntilFull();
+  await lobby.start();
+
+  // Wait for a turn that starts with a draw (the round's first player starts without one).
+  const take = page.getByTestId("rami-take-discard");
+  for (let i = 0; i < 400 && !(await take.isVisible().catch(() => false)); i++) {
+    if (await page.getByTestId("rami-discard").isVisible().catch(() => false)) {
+      await page.locator('[data-testid="rami-hand-card"] button').first().click({ position: { x: 6, y: 24 } });
+      await page.getByTestId("rami-discard").click();
+    }
+    await page.waitForTimeout(50);
+  }
+  await take.click();
+  await page.locator('[data-testid="rami-hand-card"] button').first().click({ position: { x: 6, y: 24 } });
+  await page.getByTestId("rami-discard").click();
+  await expect(page.getByTestId("rami-discard")).toBeHidden({ timeout: 10_000 });
+  await expect(page.getByTestId("rami-error")).toHaveCount(0);
+});

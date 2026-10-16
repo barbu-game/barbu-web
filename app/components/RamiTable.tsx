@@ -141,7 +141,7 @@ export default function RamiTable({
         <Felt
           state={state}
           canDraw={turnPhase === "DRAW"}
-          canTakeDiscard={turnPhase === "DRAW" && hand.length > 2 && !rami?.discardClosed && Boolean(rami?.discardTop)}
+          canTakeDiscard={turnPhase === "DRAW" && hand.length > 2 && Boolean(rami?.discardTop)}
           meldsClickable={turnPhase === "PLAY" && opened && sel.length > 0}
           onDraw={(source) => send({ kind: "draw", source })}
           onMeldClick={onMeldClick}
@@ -214,7 +214,7 @@ export default function RamiTable({
                   data-testid="rami-take-discard"
                   size="sm"
                   variant="ghost"
-                  disabled={hand.length <= 2 || Boolean(rami?.discardClosed) || !rami?.discardTop}
+                  disabled={hand.length <= 2 || !rami?.discardTop}
                   onClick={() => send({ kind: "draw", source: "DISCARD" })}
                 >
                   {t("rami.takeDiscard")}
