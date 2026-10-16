@@ -108,3 +108,28 @@ test("the leaderboard has a Rami tab", async ({ page }) => {
   await page.getByTestId("leaderboard-rami").click();
   await expect(page.getByTestId("leaderboard-rami")).toHaveAttribute("aria-selected", "true");
 });
+
+test("on a narrow phone a card can be dragged to the hand's second row", async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 320, height: 720 });
+  const home = new HomePage(page);
+  await home.goto();
+  await home.setName("E2E-Rami-Rows");
+  await page.getByTestId("game-rami").click();
+  await home.createTable();
+  const lobby = new LobbyPage(page);
+  await lobby.addBotUntilFull();
+  await lobby.start();
+
+  const cards = page.locator('[data-testid="rami-hand-card"]');
+  await expect(cards.first()).toBeVisible({ timeout: 20_000 });
+  const first = (await cards.first().boundingBox())!;
+  const last = (await cards.last().boundingBox())!;
+  expect(last.y).toBeGreaterThan(first.y + 10); // the hand really is on two rows
+  const firstId = await cards.first().getAttribute("data-card-id");
+  await page.mouse.move(first.x + 6, first.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(last.x + last.width - 4, last.y + 20, { steps: 10 });
+  await page.mouse.up();
+  await expect(cards.last()).toHaveAttribute("data-card-id", firstId!);
+});
