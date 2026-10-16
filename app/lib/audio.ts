@@ -46,6 +46,28 @@ class AudioManager {
     source.connect(band).connect(gain).connect(ctx.destination);
     source.start();
   }
+
+  /** Soft two-note chime: it is your turn. */
+  playTurn() {
+    if (!this.sfxOn) {
+      return;
+    }
+    const ctx = this.context();
+    const now = ctx.currentTime;
+    [660, 880].forEach((freq, i) => {
+      const start = now + i * 0.13;
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.18, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.3);
+    });
+  }
 }
 
 export const audio = new AudioManager();

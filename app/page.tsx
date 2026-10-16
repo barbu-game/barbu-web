@@ -50,6 +50,14 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
     previousCardCount.current = cardCount;
   }, [cardCount]);
 
+  // Chime once when the turn comes to us; a Rami turn spans several moves but sounds only once.
+  const myTurn = Boolean(game.state && game.state.phase === "PLAYING" && game.state.currentActor === game.state.yourSeat);
+  const wasMyTurn = useRef(false);
+  useEffect(() => {
+    if (myTurn && !wasMyTurn.current) audio.playTurn();
+    wasMyTurn.current = myTurn;
+  }, [myTurn]);
+
   // Keep the socket's auth token in step with the session (incl. after a refresh).
   // setAuthToken only writes a ref, so calling it from an effect triggers no re-render.
   const { setAuthToken } = game;
