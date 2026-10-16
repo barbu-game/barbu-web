@@ -4,7 +4,9 @@ import { useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { GameState } from "../lib/game";
 import {
+  fitMeldWidth,
   meldKind,
+  MELD_STEP,
   meldTapMoves,
   moveCard,
   openingTotal,
@@ -81,6 +83,16 @@ export default function RamiTable({
     setChoice(null);
   }
 
+  // A hand that grew by exactly one card was drawn into; deals and joker swaps don't qualify.
+  const handKey = hand.map((c) => c.id).join(",");
+  const [prevHand, setPrevHand] = useState({ key: handKey, ids: hand.map((c) => c.id) });
+  const [drawn, setDrawn] = useState<number | null>(null);
+  if (handKey !== prevHand.key) {
+    const fresh = hand.filter((c) => !prevHand.ids.includes(c.id));
+    setDrawn(fresh.length === 1 && hand.length === prevHand.ids.length + 1 ? fresh[0].id : null);
+    setPrevHand({ key: handKey, ids: hand.map((c) => c.id) });
+  }
+
   // Derived at render: cards that left the hand (played, turn reset) fall out of the selection/draft.
   const byId = new Map(hand.map((c) => [c.id, c]));
   const groups = turnPhase === "PLAY" && !opened ? draft.map((g) => g.filter((id) => byId.has(id))).filter((g) => g.length) : [];
@@ -141,7 +153,7 @@ export default function RamiTable({
         <Felt
           state={state}
           canDraw={turnPhase === "DRAW"}
-          canTakeDiscard={turnPhase === "DRAW" && hand.length > 2 && Boolean(rami?.discardTop)}
+          canTakeDiscard={turnPhase === "DRAW" && hand.length > 1 && Boolean(rami?.discardTop)}
           meldsClickable={turnPhase === "PLAY" && opened && sel.length > 0}
           onDraw={(source) => send({ kind: "draw", source })}
           onMeldClick={onMeldClick}
@@ -214,7 +226,7 @@ export default function RamiTable({
                   data-testid="rami-take-discard"
                   size="sm"
                   variant="ghost"
-                  disabled={hand.length <= 2 || !rami?.discardTop}
+                  disabled={hand.length <= 1 || !rami?.discardTop}
                   onClick={() => send({ kind: "draw", source: "DISCARD" })}
                 >
                   {t("rami.takeDiscard")}
@@ -267,7 +279,7 @@ export default function RamiTable({
                     <Button
                       data-testid="rami-open"
                       size="sm"
-                      disabled={draftTotal < OPENING_MIN || !keepsACard(inDraft.size)}
+                      disabled={draftTotal < OPENING_MIN || !groupCards.some((g) => meldKind(g) === "RUN") || !keepsACard(inDraft.size)}
                       onClick={() => send({ kind: "open", melds: groups })}
                     >
                       {t("rami.open", { n: draftTotal })}
@@ -328,6 +340,7 @@ export default function RamiTable({
           selectable={turnPhase === "PLAY"}
           selected={sel}
           highlighted={mustPlay}
+          drawn={drawn}
           onToggle={toggle}
         />
       </div>
@@ -361,7 +374,10 @@ function Felt({
   const rami = state.rami;
   const melds = rami?.melds ?? [];
   const owners = state.players.filter((p) => melds.some((m) => m.owner === p.seat));
-  const cw = narrow ? 30 : 36;
+  // Without a free area the column is inset by 8px on every side.
+  const box = area ? { width: area.w, height: area.h } : { width: size.width - 16, height: size.height - 16 };
+  const cw = fitMeldWidth(box, owners.map((p) => melds.filter((m) => m.owner === p.seat).map((m) => m.cards.length)));
+  const pw = cw * 1.2;
 
   return (
     <div className="flex h-full flex-col gap-2 p-2 sm:p-4">
@@ -385,7 +401,7 @@ function Felt({
                 className={cn("flex flex-col items-center gap-1 text-xs text-white/60", canDraw && "cursor-pointer hover:text-white")}
               >
                 <span
-                  style={{ width: cw * 1.4, height: Math.round(cw * 1.4 * CARD_RATIO) }}
+                  style={{ width: pw, height: Math.round(pw * CARD_RATIO) }}
                   className={cn(
                     "grid place-items-center rounded-[0.32em] bg-[repeating-linear-gradient(45deg,#3a2f1d,#3a2f1d_4px,#2c2416_4px,#2c2416_8px)] ring-1 ring-black/30",
                     canDraw && "ring-2 ring-gold-soft",
@@ -403,10 +419,10 @@ function Felt({
               >
                 {rami.discardTop ? (
                   <span className="pointer-events-none">
-                    <Card card={rami.discardTop} width={cw * 1.4} highlight={canTakeDiscard} />
+                    <Card card={rami.discardTop} width={pw} highlight={canTakeDiscard} />
                   </span>
                 ) : (
-                  <span style={{ width: cw * 1.4, height: Math.round(cw * 1.4 * CARD_RATIO) }} className="rounded-[0.32em] border border-dashed border-white/20" />
+                  <span style={{ width: pw, height: Math.round(pw * CARD_RATIO) }} className="rounded-[0.32em] border border-dashed border-white/20" />
                 )}
                 {t("rami.discard")}
               </Clickable>
@@ -481,7 +497,7 @@ function Clickable({
 }
 
 function MiniRow({ cards, width }: { cards: RamiCardT[]; width: number }) {
-  const step = width * 0.55;
+  const step = width * MELD_STEP;
   return (
     // Display-only cards: their disabled buttons would otherwise swallow taps meant for the meld.
     <span
@@ -504,6 +520,7 @@ function Hand({
   selectable,
   selected,
   highlighted,
+  drawn,
   onToggle,
   onReorder,
 }: {
@@ -511,6 +528,7 @@ function Hand({
   selectable: boolean;
   selected: number[];
   highlighted: Set<number>;
+  drawn: number | null;
   onToggle: (id: number) => void;
   onReorder: (id: number, toIndex: number) => void;
 }) {
@@ -572,6 +590,7 @@ function Hand({
               data-penalty={penalty(card)}
               className={cn(
                 "absolute touch-none hover:z-50",
+                card.id === drawn && "animate-drawn",
                 dragging ? "z-[60] cursor-grabbing" : "transition-[left,top] duration-200 ease-out motion-reduce:transition-none",
               )}
               style={{

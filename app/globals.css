@@ -64,8 +64,26 @@ button {
   }
 }
 
+@keyframes drawn-glow {
+  0%,
+  65% {
+    transform: translateY(-12px);
+    filter: drop-shadow(0 0 3px var(--color-gold-soft)) drop-shadow(0 0 10px var(--color-gold-soft));
+  }
+}
+
+.animate-drawn {
+  animation: drawn-glow 3s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in {
     animation: none;
+  }
+  @keyframes drawn-glow {
+    0%,
+    65% {
+      filter: drop-shadow(0 0 3px var(--color-gold-soft)) drop-shadow(0 0 10px var(--color-gold-soft));
+    }
   }
 }
