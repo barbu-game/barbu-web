@@ -196,6 +196,7 @@ export default function Page({ searchParams }: { searchParams: Promise<{ join?: 
         onPlay={game.play}
         onCastPauseVote={game.castPauseVote}
         onCastStopVote={game.castStopVote}
+        onCastRematchVote={game.castRematchVote}
         onResume={game.resumeGame}
       />
     );

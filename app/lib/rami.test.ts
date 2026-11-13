@@ -16,22 +16,27 @@ function c(code: string): RamiCardT {
 const cs = (...codes: string[]) => codes.map(c);
 
 describe("meldKind", () => {
-  it("accepts runs and sets with at most one joker", () => {
+  it("accepts runs and sets with up to two jokers", () => {
     expect(meldKind(cs("5H", "6H", "7H"))).toBe("RUN");
     expect(meldKind(cs("5H", "JK", "7H"))).toBe("RUN");
     expect(meldKind(cs("AH", "2H", "3H"))).toBe("RUN");
     expect(meldKind(cs("QH", "KH", "AH"))).toBe("RUN");
     expect(meldKind(cs("7H", "7S", "7D"))).toBe("SET");
     expect(meldKind(cs("7H", "7S", "JK"))).toBe("SET");
+    expect(meldKind(cs("5H", "JK", "JK"))).toBe("RUN");
+    expect(meldKind(cs("JK", "6H", "JK"))).toBe("RUN");
+    expect(meldKind(cs("5H", "JK", "7H", "JK"))).toBe("RUN");
+    expect(meldKind(cs("7H", "7S", "JK", "JK"))).toBe("SET");
   });
 
-  it("rejects wraps, double aces, mixed suits, duplicates and two jokers", () => {
+  it("rejects wraps, double aces, mixed suits, duplicates and three jokers", () => {
     expect(meldKind(cs("KH", "AH", "2H"))).toBeNull();
     expect(meldKind(cs("JK", "AH", "2H"))).toBeNull();
     expect(meldKind(cs("AH", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "JH", "QH", "KH", "AH"))).toBeNull();
     expect(meldKind(cs("5H", "6S", "7H"))).toBeNull();
     expect(meldKind(cs("7H", "7H", "7S"))).toBeNull();
-    expect(meldKind(cs("5H", "JK", "JK"))).toBeNull();
+    expect(meldKind(cs("5H", "JK", "JK", "JK"))).toBeNull();
+    expect(meldKind(cs("JK", "AH", "JK"))).toBeNull();
     expect(meldKind(cs("5H", "6H"))).toBeNull();
   });
 });
@@ -86,6 +91,10 @@ describe("canSwapJoker", () => {
     expect(canSwapJoker(four, c("7C"))).toBe(true);
     expect(canSwapJoker(four, c("7H"))).toBe(false);
     expect(canSwapJoker({ id: 5, owner: 0, kind: "RUN", cards: cs("5H", "6H", "7H") }, c("8H"))).toBe(false);
+    const twoJokers = { id: 6, owner: 0, kind: "RUN", cards: cs("5H", "JK", "7H", "JK") };
+    expect(canSwapJoker(twoJokers, c("6H"))).toBe(true);
+    expect(canSwapJoker(twoJokers, c("8H"))).toBe(true);
+    expect(canSwapJoker(twoJokers, c("9H"))).toBe(false);
   });
 });
 
