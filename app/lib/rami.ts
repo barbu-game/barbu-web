@@ -28,16 +28,19 @@ const LOW_ACE = 1;
 const HIGH_ACE = 14;
 // An ace may open or close a run, never both.
 const MAX_RUN = 13;
+const MAX_JOKERS = 2;
 
 const reals = (cards: RamiCardT[]) => cards.filter((c) => !c.joker);
 
 function jokerBudgetOk(cards: RamiCardT[]): boolean {
-  return cards.length >= 3 && cards.filter((c) => c.joker).length <= 1;
+  return cards.length >= 3 && cards.filter((c) => c.joker).length <= MAX_JOKERS;
 }
 
 function isSet(cards: RamiCardT[]): boolean {
   if (!jokerBudgetOk(cards) || cards.length > 4) return false;
   const r = reals(cards);
+  // One real card and two jokers always read as a run.
+  if (r.length < 2) return false;
   return r.every((c) => c.rank === r[0].rank) && new Set(r.map((c) => c.suit)).size === r.length;
 }
 
@@ -50,7 +53,7 @@ function runStart(cards: RamiCardT[]): number | null {
   if (!jokerBudgetOk(cards) || cards.length > MAX_RUN) return null;
   const r = reals(cards);
   if (r.some((c) => c.suit !== r[0].suit)) return null;
-  const i = cards[0].joker ? 1 : 0;
+  const i = cards.findIndex((c) => !c.joker);
   const first = cards[i].rank!;
   const candidates = first === "ACE" ? [LOW_ACE - i, HIGH_ACE - i] : [RANK_VALUE[first] - i];
   for (const start of candidates) {
@@ -87,11 +90,9 @@ export function layOffMove(meld: RamiMeldT, cards: RamiCardT[]): RamiMove | null
 }
 
 export function canSwapJoker(meld: RamiMeldT, card: RamiCardT): boolean {
-  const at = meld.cards.findIndex((c) => c.joker);
   // A three-card set's joker has no definite suit: it is only taken from a four of a kind.
-  if (at < 0 || card.joker || (meld.kind === "SET" && meld.cards.length < 4)) return false;
-  const swapped = meld.cards.map((c, i) => (i === at ? card : c));
-  return meldKind(swapped) === meld.kind;
+  if (card.joker || (meld.kind === "SET" && meld.cards.length < 4)) return false;
+  return meld.cards.some((j, at) => j.joker && meldKind(meld.cards.map((c, i) => (i === at ? card : c))) === meld.kind);
 }
 
 /**

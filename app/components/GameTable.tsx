@@ -207,7 +207,7 @@ const SEAT_W = (feltWidth: number) => clamp(feltWidth * 0.17, 132, 176);
 const SEAT_H = 84;
 
 /** Centres of the opponents' tiles around a wide felt, kept fully inside it. */
-function seatCenters(size: { width: number; height: number }, state: GameState) {
+export function seatCenters(size: { width: number; height: number }, state: GameState) {
   const pw = SEAT_W(size.width);
   const you = state.yourSeat ?? 0;
   return state.players
@@ -749,7 +749,15 @@ function RoundIntermission({ state }: { state: GameState }) {
   );
 }
 
-export function GameOver({ state, rankedResults }: { state: GameState; rankedResults: RankedMessagesRankedResultEntry[] | null }) {
+export function GameOver({
+  state,
+  rankedResults,
+  action,
+}: {
+  state: GameState;
+  rankedResults: RankedMessagesRankedResultEntry[] | null;
+  action?: React.ReactNode;
+}) {
   const t = useT();
   const standings = state.standings ?? [];
   const eloBySeat = new Map((rankedResults ?? []).map((e) => [e.seat, e]));
@@ -779,7 +787,8 @@ export function GameOver({ state, rankedResults }: { state: GameState; rankedRes
           );
         })}
       </ol>
-      <Button className="mt-5 w-full" onClick={() => window.location.reload()}>
+      {action}
+      <Button className="mt-5 w-full" variant={action ? "ghost" : undefined} onClick={() => window.location.reload()}>
         {t("over.newGame")}
       </Button>
     </div>

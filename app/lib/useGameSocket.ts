@@ -204,8 +204,9 @@ export function useGameSocket() {
   const play = useCallback((move: MoveT | RamiMove) => send({ type: "play", move }), [send]);
   const castStopVote = useCallback((stop: boolean) => send({ type: "castStopVote", stop }), [send]);
   const castPauseVote = useCallback((pause: boolean) => send({ type: "castPauseVote", pause }), [send]);
+  const castRematchVote = useCallback((rematch: boolean) => send({ type: "castRematchVote", rematch }), [send]);
   const resumeGame = useCallback(() => send({ type: "resumeGame" }), [send]);
   const sendChat = useCallback((text: string) => send({ type: "chat", text }), [send]);
 
-  return { state, seat, roomId, error, status, messages, rankedResults, resumeUnavailable, searching, setAuthToken, createRoom, join, quickMatch, cancelMatch, resume, addBot, renameBot, leave, start, play, castStopVote, castPauseVote, resumeGame, sendChat };
+  return { state, seat, roomId, error, status, messages, rankedResults, resumeUnavailable, searching, setAuthToken, createRoom, join, quickMatch, cancelMatch, resume, addBot, renameBot, leave, start, play, castStopVote, castPauseVote, castRematchVote, resumeGame, sendChat };
 }

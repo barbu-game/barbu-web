@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { useAnimate, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
-import type { GameState } from "../lib/game";
+import { rankLabel, SUIT_SYMBOL, type GameState } from "../lib/game";
 import {
   fitMeldWidth,
   meldKind,
@@ -36,6 +37,7 @@ import {
   StopVote,
   RankingRow,
   SeatsAround,
+  seatCenters,
   TurnTimerBar,
 } from "./GameTable";
 
@@ -47,6 +49,7 @@ export default function RamiTable({
   onPlay,
   onCastPauseVote,
   onCastStopVote,
+  onCastRematchVote,
   onResume,
 }: {
   state: GameState;
@@ -54,6 +57,7 @@ export default function RamiTable({
   onPlay: (move: RamiMove) => void;
   onCastPauseVote: (pause: boolean) => void;
   onCastStopVote: (stop: boolean) => void;
+  onCastRematchVote: (rematch: boolean) => void;
   onResume: () => void;
 }) {
   const t = useT();
@@ -68,19 +72,26 @@ export default function RamiTable({
   const [selected, setSelected] = useState<number[]>([]);
   const [draft, setDraft] = useState<number[][]>([]);
   const [sortBy, setSortBy] = useState<"suit" | "rank" | "manual">("suit");
+  const [autoSort, setAutoSort] = useState<"suit" | "rank">("suit");
   const [manual, setManual] = useState<number[]>([]);
   const [dismissed, setDismissed] = useState<string | null>(null);
   const [choice, setChoice] = useState<RamiMove[] | null>(null);
   // A message dismissed once must show again if it comes back after a fresh state cleared it.
   if (!error && dismissed) setDismissed(null);
-  // A turn that ended without us (timeout, round over) must not hand its draft to the next one.
   const turnKey = `${state.roundNumber}:${yourTurn}`;
   const [lastTurnKey, setLastTurnKey] = useState(turnKey);
   if (turnKey !== lastTurnKey) {
     setLastTurnKey(turnKey);
     setSelected([]);
-    setDraft([]);
     setChoice(null);
+  }
+  // Opening piles live until the round ends; a manual order only fits the hand it was made for.
+  const [lastRound, setLastRound] = useState(state.roundNumber);
+  if (state.roundNumber !== lastRound) {
+    setLastRound(state.roundNumber);
+    setDraft([]);
+    setManual([]);
+    setSortBy(autoSort);
   }
 
   // A hand that grew by exactly one card was drawn into; deals and joker swaps don't qualify.
@@ -95,7 +106,7 @@ export default function RamiTable({
 
   // Derived at render: cards that left the hand (played, turn reset) fall out of the selection/draft.
   const byId = new Map(hand.map((c) => [c.id, c]));
-  const groups = turnPhase === "PLAY" && !opened ? draft.map((g) => g.filter((id) => byId.has(id))).filter((g) => g.length) : [];
+  const groups = !opened ? draft.map((g) => g.filter((id) => byId.has(id))).filter((g) => g.length) : [];
   const inDraft = new Set(groups.flat());
   const sel = turnPhase === "PLAY" ? selected.filter((id) => byId.has(id) && !inDraft.has(id)) : [];
   const selCards = sel.map((id) => byId.get(id)!);
@@ -114,10 +125,7 @@ export default function RamiTable({
   // Selection and draft survive a rejected move: played cards drop out of them on the next state.
   const send = (move: RamiMove) => {
     setChoice(null);
-    if (move.kind === "reset") {
-      setSelected([]);
-      setDraft([]);
-    }
+    if (move.kind === "reset") setSelected([]);
     onPlay(move);
   };
   const toggle = (id: number) => {
@@ -181,7 +189,11 @@ export default function RamiTable({
         )}
         {state.phase === "GAME_OVER" && (
           <Overlay>
-            <GameOver state={state} rankedResults={null} />
+            <GameOver
+              state={state}
+              rankedResults={null}
+              action={state.rematchVote && <Rematch vote={state.rematchVote} onVote={onCastRematchVote} />}
+            />
           </Overlay>
         )}
       </div>
@@ -203,7 +215,10 @@ export default function RamiTable({
               <button
                 key={k}
                 type="button"
-                onClick={() => setSortBy(k)}
+                onClick={() => {
+                  setSortBy(k);
+                  if (k !== "manual") setAutoSort(k);
+                }}
                 className={cn("rounded px-1.5 py-0.5", sortBy === k ? "bg-surface-2 text-foreground" : "hover:text-foreground")}
               >
                 {t(k === "suit" ? "rami.sortSuit" : k === "rank" ? "rami.sortRank" : "rami.sortManual")}
@@ -378,6 +393,26 @@ function Felt({
   const box = area ? { width: area.w, height: area.h } : { width: size.width - 16, height: size.height - 16 };
   const cw = fitMeldWidth(box, owners.map((p) => melds.filter((m) => m.owner === p.seat).map((m) => m.cards.length)));
   const pw = cw * 1.2;
+  const stockRef = useRef<HTMLSpanElement>(null);
+  const discardRef = useRef<HTMLSpanElement>(null);
+
+  // A seat going from DRAW to PLAY has drawn; the discard top changes only when it was taken.
+  const seen = { round: state.roundNumber, actor: state.currentActor, phase: rami?.turnPhase, top: rami?.discardTop ?? null };
+  const [prev, setPrev] = useState(seen);
+  const [draw, setDraw] = useState<Draw | null>(null);
+  if (seen.round !== prev.round || seen.actor !== prev.actor || seen.phase !== prev.phase || seen.top?.id !== prev.top?.id) {
+    setPrev(seen);
+    if (seen.round === prev.round && seen.actor === prev.actor && typeof seen.actor === "number" && prev.phase === "DRAW" && seen.phase === "PLAY") {
+      const taken = prev.top && prev.top.id !== seen.top?.id ? prev.top : null;
+      setDraw({ n: (draw?.n ?? 0) + 1, seat: seen.actor, card: taken });
+    }
+  }
+  const drawer = draw ? state.players[draw.seat]?.name ?? "" : "";
+  const flightTarget = (seat: number) => {
+    if (seat === (state.yourSeat ?? 0)) return { x: size.width / 2, y: size.height + 40 };
+    const c = !narrow && seatCenters(size, state).find((s) => s.seat === seat);
+    return c ? { x: c.x, y: c.y } : { x: size.width / 2, y: -40 };
+  };
 
   return (
     <div className="flex h-full flex-col gap-2 p-2 sm:p-4">
@@ -401,6 +436,7 @@ function Felt({
                 className={cn("flex flex-col items-center gap-1 text-xs text-white/60", canDraw && "cursor-pointer hover:text-white")}
               >
                 <span
+                  ref={stockRef}
                   style={{ width: pw, height: Math.round(pw * CARD_RATIO) }}
                   className={cn(
                     "grid place-items-center rounded-[0.32em] bg-[repeating-linear-gradient(45deg,#3a2f1d,#3a2f1d_4px,#2c2416_4px,#2c2416_8px)] ring-1 ring-black/30",
@@ -418,15 +454,22 @@ function Felt({
                 className="flex flex-col items-center gap-1 text-xs text-white/60"
               >
                 {rami.discardTop ? (
-                  <span className="pointer-events-none">
+                  <span ref={discardRef} className="pointer-events-none">
                     <Card card={rami.discardTop} width={pw} highlight={canTakeDiscard} />
                   </span>
                 ) : (
-                  <span style={{ width: pw, height: Math.round(pw * CARD_RATIO) }} className="rounded-[0.32em] border border-dashed border-white/20" />
+                  <span ref={discardRef} style={{ width: pw, height: Math.round(pw * CARD_RATIO) }} className="rounded-[0.32em] border border-dashed border-white/20" />
                 )}
                 {t("rami.discard")}
               </Clickable>
             </div>
+            {draw && (
+              <p key={draw.n} data-testid="rami-draw-caption" className="animate-caption -mt-1 text-xs font-medium text-gold-soft">
+                {draw.card
+                  ? t("rami.drewDiscard", { name: drawer, card: cardLabel(draw.card) })
+                  : t("rami.drewStock", { name: drawer })}
+              </p>
+            )}
 
             {melds.length === 0 ? (
               <p className="text-xs text-white/40">{t("rami.noMelds")}</p>
@@ -457,7 +500,106 @@ function Felt({
             )}
           </div>
         )}
+        {draw && ready && (
+          <DrawFlight
+            key={draw.n}
+            from={draw.card ? discardRef : stockRef}
+            to={flightTarget(draw.seat)}
+            card={draw.card}
+            width={pw}
+          />
+        )}
       </div>
+    </div>
+  );
+}
+
+type Draw = { n: number; seat: number; card: RamiCardT | null };
+
+const cardLabel = (c: RamiCardT) => (c.joker ? "Joker" : `${rankLabel(c.rank!)}${SUIT_SYMBOL[c.suit!]}`);
+
+/** The drawn card (face down from the stock, face up from the discard) flying to whoever drew it. */
+function DrawFlight({
+  from,
+  to,
+  card,
+  width,
+}: {
+  from: React.RefObject<HTMLSpanElement | null>;
+  to: { x: number; y: number };
+  card: RamiCardT | null;
+  width: number;
+}) {
+  const reduced = useReducedMotion();
+  const [scope, animate] = useAnimate<HTMLDivElement>();
+  const height = Math.round(width * CARD_RATIO);
+  const { x: toX, y: toY } = to;
+  useLayoutEffect(() => {
+    const el = scope.current;
+    const box = el?.offsetParent?.getBoundingClientRect();
+    const pile = from.current?.getBoundingClientRect();
+    if (!el || !box || !pile || reduced) return;
+    animate(
+      el,
+      {
+        x: [pile.left - box.left, toX - width / 2],
+        y: [pile.top - box.top, toY - height / 2],
+        scale: [1.1, 0.75],
+        opacity: [1, 1, 0],
+      },
+      { duration: 1, ease: "easeInOut", opacity: { duration: 1, times: [0, 0.6, 1] } },
+    );
+  }, [animate, scope, from, toX, toY, width, height, reduced]);
+  return (
+    <div
+      ref={scope}
+      style={{ opacity: 0 }}
+      className="pointer-events-none absolute left-0 top-0 z-30 drop-shadow-[0_6px_14px_rgba(0,0,0,0.45)]"
+    >
+      {card ? (
+        <Card card={card} width={width} />
+      ) : (
+        <span
+          style={{ width, height }}
+          className="block rounded-[0.32em] bg-[repeating-linear-gradient(45deg,#3a2f1d,#3a2f1d_4px,#2c2416_4px,#2c2416_8px)] ring-1 ring-gold-soft"
+        />
+      )}
+    </div>
+  );
+}
+
+function Rematch({
+  vote,
+  onVote,
+}: {
+  vote: NonNullable<GameState["rematchVote"]>;
+  onVote: (rematch: boolean) => void;
+}) {
+  const t = useT();
+  if (!vote.open) {
+    return (
+      <Button data-testid="rematch" className="mt-5 w-full" onClick={() => onVote(true)}>
+        {t("over.rematch")}
+      </Button>
+    );
+  }
+  const voted = vote.youVoted !== null && vote.youVoted !== undefined;
+  return (
+    <div data-testid="rematch-vote" className="mt-5 rounded-lg border border-border bg-surface-2 p-3">
+      <p className="text-sm font-medium">{t("over.rematchTitle")}</p>
+      <p className="mt-0.5 text-xs text-muted-fg">
+        {voted ? t("vote.cast") : t("over.rematchCount", { n: vote.rematchVotes, total: vote.humans })}
+      </p>
+      {!voted && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button data-testid="rematch-no" variant="ghost" size="sm" onClick={() => onVote(false)}>
+            {t("over.rematchNo")}
+          </Button>
+          <Button data-testid="rematch-yes" size="sm" onClick={() => onVote(true)}>
+            {t("over.rematchYes")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
