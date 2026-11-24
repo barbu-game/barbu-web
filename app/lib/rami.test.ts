@@ -154,8 +154,8 @@ describe("fitMeldWidth", () => {
     const five = Array.from({ length: 5 }, () => [4, 3, 3, 5]);
     const cw = fitMeldWidth({ width: 430, height: 680 }, five);
     expect(cw).toBeLessThan(60);
-    expect(cw).toBeGreaterThan(22);
-    expect(fitMeldWidth({ width: 200, height: 120 }, five)).toBe(22);
+    expect(cw).toBeGreaterThan(16);
+    expect(fitMeldWidth({ width: 200, height: 120 }, five)).toBe(16);
   });
   it("keeps the piles inside a short area", () => {
     expect(fitMeldWidth({ width: 900, height: 110 }, [])).toBeLessThanOrEqual(60);

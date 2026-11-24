@@ -398,13 +398,26 @@ function Felt({
 
   // A seat going from DRAW to PLAY has drawn; the discard top changes only when it was taken.
   const seen = { round: state.roundNumber, actor: state.currentActor, phase: rami?.turnPhase, top: rami?.discardTop ?? null };
+  // A new discard top as the turn leaves a seat in PLAY is that seat's discard.
   const [prev, setPrev] = useState(seen);
-  const [draw, setDraw] = useState<Draw | null>(null);
+  const [draw, setDraw] = useState<Flight | null>(null);
+  const [flights, setFlights] = useState<Flight[]>([]);
   if (seen.round !== prev.round || seen.actor !== prev.actor || seen.phase !== prev.phase || seen.top?.id !== prev.top?.id) {
     setPrev(seen);
+    const n = (flights.at(-1)?.n ?? 0) + 1;
     if (seen.round === prev.round && seen.actor === prev.actor && typeof seen.actor === "number" && prev.phase === "DRAW" && seen.phase === "PLAY") {
       const taken = prev.top && prev.top.id !== seen.top?.id ? prev.top : null;
-      setDraw({ n: (draw?.n ?? 0) + 1, seat: seen.actor, card: taken });
+      setDraw({ n, seat: seen.actor, card: taken, discard: false });
+      setFlights([...flights.slice(-1), { n, seat: seen.actor, card: taken, discard: false }]);
+    } else if (
+      seen.round === prev.round &&
+      typeof prev.actor === "number" &&
+      seen.actor !== prev.actor &&
+      prev.phase === "PLAY" &&
+      seen.top &&
+      seen.top.id !== prev.top?.id
+    ) {
+      setFlights([...flights.slice(-1), { n, seat: prev.actor, card: seen.top, discard: true }]);
     }
   }
   const drawer = draw ? state.players[draw.seat]?.name ?? "" : "";
@@ -427,7 +440,7 @@ function Felt({
             className="absolute flex flex-col items-center gap-3 overflow-y-auto p-2"
             style={area ? { left: area.x, top: area.y, width: area.w, height: area.h } : { inset: 8 }}
           >
-            <div className="flex items-end gap-4">
+            <div className="relative flex items-end gap-4">
               <button
                 type="button"
                 data-testid="rami-stock"
@@ -462,14 +475,19 @@ function Felt({
                 )}
                 {t("rami.discard")}
               </Clickable>
+              {/* Overlaid so it never takes room from the melds, which are sized to fit unscrolled. */}
+              {draw && (
+                <p
+                  key={draw.n}
+                  data-testid="rami-draw-caption"
+                  className="animate-caption pointer-events-none absolute left-1/2 top-full z-20 mt-0.5 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/45 px-2 py-0.5 text-xs font-medium text-gold-soft"
+                >
+                  {draw.card
+                    ? t("rami.drewDiscard", { name: drawer, card: cardLabel(draw.card) })
+                    : t("rami.drewStock", { name: drawer })}
+                </p>
+              )}
             </div>
-            {draw && (
-              <p key={draw.n} data-testid="rami-draw-caption" className="animate-caption -mt-1 text-xs font-medium text-gold-soft">
-                {draw.card
-                  ? t("rami.drewDiscard", { name: drawer, card: cardLabel(draw.card) })
-                  : t("rami.drewStock", { name: drawer })}
-              </p>
-            )}
 
             {melds.length === 0 ? (
               <p className="text-xs text-white/40">{t("rami.noMelds")}</p>
@@ -500,59 +518,71 @@ function Felt({
             )}
           </div>
         )}
-        {draw && ready && (
-          <DrawFlight
-            key={draw.n}
-            from={draw.card ? discardRef : stockRef}
-            to={flightTarget(draw.seat)}
-            card={draw.card}
-            width={pw}
-          />
-        )}
+        {/* The previous flight keeps going when a new one starts (a bot discards, you draw at once). */}
+        {ready &&
+          flights.map((f) => (
+            <CardFlight
+              key={f.n}
+              pile={f.card ? discardRef : stockRef}
+              seat={flightTarget(f.seat)}
+              card={f.card}
+              toPile={f.discard}
+              width={pw}
+            />
+          ))}
       </div>
     </div>
   );
 }
 
-type Draw = { n: number; seat: number; card: RamiCardT | null };
+type Flight = { n: number; seat: number; card: RamiCardT | null; discard: boolean };
 
 const cardLabel = (c: RamiCardT) => (c.joker ? "Joker" : `${rankLabel(c.rank!)}${SUIT_SYMBOL[c.suit!]}`);
 
-/** The drawn card (face down from the stock, face up from the discard) flying to whoever drew it. */
-function DrawFlight({
-  from,
-  to,
+/** A card flying between a pile and a seat: drawn (face down from the stock) or taken/discarded (face up). */
+function CardFlight({
+  pile,
+  seat,
   card,
+  toPile,
   width,
 }: {
-  from: React.RefObject<HTMLSpanElement | null>;
-  to: { x: number; y: number };
+  pile: React.RefObject<HTMLSpanElement | null>;
+  seat: { x: number; y: number };
   card: RamiCardT | null;
+  toPile: boolean;
   width: number;
 }) {
   const reduced = useReducedMotion();
   const [scope, animate] = useAnimate<HTMLDivElement>();
   const height = Math.round(width * CARD_RATIO);
-  const { x: toX, y: toY } = to;
+  // Each flight plays once: later layout changes (melds resizing, the hand bar shrinking) must not replay it.
+  const launch = useRef<{ seat: typeof seat; toPile: boolean; width: number; height: number } | null>({ seat, toPile, width, height });
   useLayoutEffect(() => {
     const el = scope.current;
+    if (!launch.current) return;
     const box = el?.offsetParent?.getBoundingClientRect();
-    const pile = from.current?.getBoundingClientRect();
-    if (!el || !box || !pile || reduced) return;
+    const rect = pile.current?.getBoundingClientRect();
+    if (!el || !box || !rect || reduced) return;
+    const { seat, toPile, width, height } = launch.current;
+    launch.current = null;
+    const atPile = { x: rect.left - box.left, y: rect.top - box.top, scale: toPile ? 1 : 1.1 };
+    const atSeat = { x: seat.x - width / 2, y: seat.y - height / 2, scale: 0.75 };
+    const [a, b] = toPile ? [atSeat, atPile] : [atPile, atSeat];
     animate(
       el,
+      { x: [a.x, b.x], y: [a.y, b.y], scale: [a.scale, b.scale], opacity: toPile ? [0, 1, 1, 0] : [1, 1, 0] },
       {
-        x: [pile.left - box.left, toX - width / 2],
-        y: [pile.top - box.top, toY - height / 2],
-        scale: [1.1, 0.75],
-        opacity: [1, 1, 0],
+        duration: toPile ? 0.7 : 1,
+        ease: "easeInOut",
+        opacity: toPile ? { duration: 0.7, times: [0, 0.15, 0.9, 1] } : { duration: 1, times: [0, 0.6, 1] },
       },
-      { duration: 1, ease: "easeInOut", opacity: { duration: 1, times: [0, 0.6, 1] } },
     );
-  }, [animate, scope, from, toX, toY, width, height, reduced]);
+  }, [animate, scope, pile, reduced]);
   return (
     <div
       ref={scope}
+      data-testid="rami-flight"
       style={{ opacity: 0 }}
       className="pointer-events-none absolute left-0 top-0 z-30 drop-shadow-[0_6px_14px_rgba(0,0,0,0.45)]"
     >

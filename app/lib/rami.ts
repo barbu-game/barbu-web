@@ -144,7 +144,7 @@ const AREA_PAD = 22;
 export const MELD_STEP = 0.55;
 
 /** Largest table-card width (min..max) at which the piles and every owner's melds fit `area` unscrolled. */
-export function fitMeldWidth(area: { width: number; height: number }, owners: number[][], min = 22, max = 60): number {
+export function fitMeldWidth(area: { width: number; height: number }, owners: number[][], min = 16, max = 60): number {
   const w = area.width - AREA_PAD;
   const h = area.height - AREA_PAD;
   for (let cw = max; cw > min; cw -= 2) {
